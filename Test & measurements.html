@@ -1,0 +1,2625 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests &amp; Measurements Quiz Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        :root {
+            --layout-max-width: min(1100px, 92vw);
+            --page-padding: clamp(1rem, 4vw, 2.75rem);
+            --card-radius: 20px;
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        @media (max-width: 640px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.85rem, 5vw, 1.9rem);
+                --card-radius: 18px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            :root {
+                --page-padding: clamp(0.7rem, 6vw, 1.4rem);
+                --card-radius: 16px;
+            }
+        }
+        /* Keyframes for the hover animation */
+        @keyframes splash-animation {
+          0% {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0.5;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(3.5);
+            opacity: 0;
+          }
+        }
+
+        /* --- BASE DARK THEME STYLES --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-color: #111827; /* Dark Blue/Gray Base */
+            color: #D1D5DB; /* Light Gray Text */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            position: relative; /* Needed for absolutely positioned children */
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        /* --- Page Section Base Styles --- */
+        .page-section {
+            display: none; /* Initially hidden, JS controls display */
+            opacity: 0; /* Start fully transparent */
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            padding: var(--page-padding) clamp(0.75rem, 4vw, 3rem) calc(var(--page-padding) + 1.5rem);
+            position: absolute; /* Position absolutely for overlap during transition */
+            top: 0;
+            left: 0;
+            will-change: opacity, transform, filter; /* Hint for browser optimization, added filter */
+            background-color: inherit; /* Inherit body background or set specific page background */
+            transform: scale(1); /* Base transform state */
+        }
+        .page-section.active-page {
+             position: relative; /* Take up space in the document flow when active */
+             z-index: 1; /* Ensure active page is on top */
+        }
+
+        /* Common Quiz Page Structure Styles */
+        .page-section .header {
+            color: white;
+            --header-inline-padding: clamp(1rem, 4vw, 2.25rem);
+            padding: clamp(1rem, 3vw, 1.75rem) var(--header-inline-padding);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin: 0 auto clamp(0.75rem, 2vw, 1.5rem);
+            position: relative; /* Needed for timer positioning */
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, var(--layout-max-width));
+            border-radius: var(--card-radius);
+        }
+        .page-section .header h1 {
+            margin-bottom: 15px; /* Space for timer */
+            font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+            margin: 0;
+            flex: 1 1 100%;
+            text-align: center;
+        }
+
+        .page-section .header-top {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: clamp(0.75rem, 2vw, 1.25rem);
+            width: 100%;
+        }
+
+        .page-section .header-controls {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.65rem, 2vw, 1.25rem);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-container {
+            font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+            font-weight: 500;
+            color: #ffffff;
+            background-color: rgba(0,0,0,0.32);
+            padding: 6px 12px;
+            border-radius: 10px;
+            transition: color 0.3s, transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .timer-display {
+            font-weight: 700;
+        }
+
+        .timer-label {
+            font-weight: 500;
+        }
+
+        .timer-unit {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .timer-container.practice-mode {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+        }
+
+        .timer-container.low-time {
+            color: #EF4444; /* Red text for low time */
+            animation: pulseLowTime 0.8s infinite alternate;
+        }
+
+        @keyframes pulseLowTime {
+            from {
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0);
+            }
+            to {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+            }
+        }
+
+        .mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.95em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .mode-toggle input {
+            appearance: none;
+            width: 36px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.45);
+            position: relative;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .mode-toggle input::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            transition: transform 0.3s ease;
+        }
+
+        .mode-toggle input:checked {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.6), rgba(5, 150, 105, 0.6));
+        }
+
+        .mode-toggle input:checked::after {
+            transform: translateX(18px);
+        }
+
+        .mode-toggle span.toggle-label {
+            font-weight: 500;
+            color: #d1fae5;
+        }
+
+        .question-progress {
+            font-size: 0.95em;
+            color: #9CA3AF;
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: 0.01em;
+        }
+
+        .question-progress.practice-mode {
+            color: #6ee7b7;
+        }
+
+        .quiz-card .quiz-metrics {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            text-align: left;
+            font-size: 0.95rem;
+            display: grid;
+            gap: 0.6rem;
+        }
+
+        .quiz-card .quiz-metrics h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .quiz-card .metric-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            color: #cbd5f5;
+        }
+
+        .quiz-card .metric-row span.value {
+            font-weight: 600;
+            color: #fbbf24;
+        }
+
+        .quiz-card .metric-row span.label {
+            color: #9ca3af;
+        }
+
+        .results-meta {
+            font-size: 0.95em;
+            color: #9ca3af;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .results-meta strong {
+            color: #f3f4f6;
+        }
+
+        .results-accordion {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .results-accordion h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: #f3f4f6;
+        }
+
+        .results-accordion details {
+            background: rgba(17, 24, 39, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .results-accordion summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #e0f2fe;
+            list-style: none;
+        }
+
+        .results-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .results-accordion details[open] {
+            border-color: rgba(59, 130, 246, 0.35);
+            background: rgba(30, 58, 138, 0.4);
+        }
+
+        .results-accordion .review-body {
+            margin-top: 0.75rem;
+            color: #cbd5f5;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .results-accordion .review-body strong {
+            color: #fde68a;
+        }
+
+        .results-accordion .explanation {
+            margin-top: 0.75rem;
+        }
+
+
+        #explosion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: none;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .explosion-particle {
+            position: absolute;
+            transform-origin: center center;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 1;
+            pointer-events: none;
+        }
+        .full-screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            z-index: 10001;
+            pointer-events: none;
+            animation: screenFlash 0.4s ease-out forwards;
+        }
+        @keyframes screenFlash {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .page-section .progress-bar-container {
+            padding: 3px;
+            border-radius: 10px;
+            margin: 0 auto 10px;
+            background-color: rgba(255, 255, 255, 0.12);
+            width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+            margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+            max-width: none;
+        }
+        .page-section .progress-bar {
+            height: 10px;
+            border-radius: 6px;
+            transition: width 0.4s ease-in-out;
+            width: 0%;
+            background: linear-gradient(90deg, #ffffff, #6366f1); /* Default color */
+        }
+        .page-section .quiz-container {
+            width: min(100%, var(--layout-max-width));
+            max-width: 840px;
+            margin: clamp(1.5rem, 4vw, 2.75rem) auto;
+            padding: clamp(1.5rem, 4vw, 2.5rem);
+            background: #1F2937; /* Default container background for hub */
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            color: #E5E7EB;
+            position: relative;
+            display: grid;
+            gap: clamp(1rem, 2.5vw, 1.75rem);
+        }
+
+        .page-section .options {
+            display: grid;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, 680px);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .page-section .options {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+        }
+        .page-section .question {
+            font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+            margin: 0 auto 25px;
+            min-height: 50px;
+            text-align: center;
+            font-weight: 500;
+            color: #ffffff;
+            width: min(100%, 680px);
+        }
+        .page-section .results-text {
+            font-size: clamp(1rem, 2.2vw, 1.2rem);
+            margin-bottom: 25px;
+            color: #E5E7EB;
+        }
+        .page-section .results-buttons {
+             text-align: center;
+             margin-top: 20px;
+        }
+
+        .page-section .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            color: white;
+            text-align: center;
+            font-size: 0.95em;
+        }
+        .page-section .feedback.correct {
+            background: linear-gradient(135deg, #10B981, #059669); /* Emerald Green */
+        }
+        .page-section .feedback.incorrect {
+            background: linear-gradient(135deg, #EF4444, #DC2626); /* Red */
+        }
+        .page-section .feedback.timeup {
+            background: linear-gradient(135deg, #F59E0B, #D97706); /* Amber */
+        }
+
+        .page-section .links {
+            text-align: center;
+            margin: 30px auto 20px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            width: min(100%, var(--layout-max-width));
+        }
+        .page-section .links a {
+            color: #9CA3AF; /* Default link color */
+            text-decoration: none;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+         .page-section .links a:hover {
+             color: #E5E7EB; /* Default link hover color */
+         }
+         .page-section .links a i {
+             font-size: 1.3em;
+         }
+
+        /* --- Hub/Selection Page Styles --- */
+       #quiz-selection-page {
+           background: #111827; /* Main hub background */
+           color: #D1D5DB;
+           padding: var(--page-padding);
+           padding-bottom: calc(var(--page-padding) + 1.5rem);
+       }
+        #quiz-selection-page .hub-header {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            padding: clamp(1.5rem, 3vw, 2.4rem);
+            border-radius: var(--card-radius);
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(14, 165, 233, 0.35);
+            margin: 0 auto clamp(1.5rem, 4vw, 3rem);
+            width: min(100%, var(--layout-max-width));
+            transition: transform 0.3s ease;
+            color: white;
+        }
+        #quiz-selection-page .hub-header:hover { transform: translateY(-5px); }
+    #quiz-selection-page .hub-header h1 { margin: 0; font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 700; }
+        #quiz-selection-page .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(1.35rem, 3vw, 2.5rem);
+            width: min(100%, var(--layout-max-width));
+            margin: 0 auto;
+        }
+
+        #quiz-selection-page .quiz-card {
+            background: rgba(55, 65, 81, 0.35); /* Glassy background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* Safari support */
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: clamp(1.25rem, 3vw, 2rem);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* For positioning the animation */
+            overflow: hidden; /* To contain the animation */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.85rem, 2vw, 1.25rem);
+        }
+
+        #quiz-selection-page .quiz-card > * {
+            position: relative;
+            z-index: 2; /* Ensure card content is above the animation */
+        }
+
+        #quiz-selection-page .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none; /* Let clicks pass through */
+            z-index: 1;
+        }
+
+        #quiz-selection-page .quiz-card:hover::before {
+            animation: splash-animation 0.7s ease-out;
+        }
+
+        #quiz-selection-page .quiz-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.25);
+        }
+        #quiz-selection-page .quiz-card h2 {
+            font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+            font-weight: 500;
+        }
+        #quiz-selection-page .quiz-card h2::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #0ea5e9, #2563eb);
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- NEW: Generic Glass Button Style --- */
+        .quiz-button,
+        .retry-quiz-button,
+        .page-section .options button,
+        .page-section .next-button,
+        .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: #E5E7EB;
+
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+
+            padding: 1rem;
+            margin: 8px 0;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+        }
+
+        .retry-quiz-button {
+             margin-top: 10px;
+             background-color: rgba(245, 158, 11, 0.2); /* Amber tint */
+             border-color: rgba(252, 211, 77, 0.4);
+        }
+        
+        .completion-checkmark {
+            color: #34D399; /* Emerald Green */
+            font-size: 1.5rem;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-in-out;
+            z-index: 3; /* Ensure it's on top */
+        }
+
+        .completion-checkmark.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* Previous Button Styling for centering */
+        .page-section .prev-button {
+            width: auto;
+            display: inline-block;
+            margin: 5px auto;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            opacity: 0.9;
+            border-radius: 50px;
+        }
+         .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+             display: inline-block;
+             width: auto;
+             margin: 10px;
+             padding: 12px 25px;
+             border-radius: 50px;
+             font-size: 0.95rem;
+        }
+
+        .quiz-button > *,
+        .retry-quiz-button > *,
+        .page-section .options button > *,
+        .page-section .next-button > *,
+        .page-section .retry-button > *,
+        .page-section .back-button > *,
+        .page-section .celebrate-button > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .quiz-button::before,
+        .retry-quiz-button::before,
+        .page-section .options button::before,
+        .page-section .next-button::before,
+        .page-section .retry-button::before,
+        .page-section .back-button::before,
+        .page-section .celebrate-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .quiz-button:hover::before,
+        .retry-quiz-button:hover::before,
+        .page-section .options button:hover:not(:disabled)::before,
+        .page-section .next-button:hover::before,
+        .page-section .retry-button:hover::before,
+        .page-section .back-button:hover::before,
+        .page-section .celebrate-button:hover::before {
+            animation: splash-animation 0.6s ease-out;
+        }
+
+        .quiz-button:hover,
+        .retry-quiz-button:hover,
+        .page-section .options button:hover:not(:disabled),
+        .page-section .next-button:hover,
+        .page-section .retry-button:hover,
+        .page-section .back-button:hover,
+        .page-section .celebrate-button:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .page-section .options button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .page-section .options button:disabled {
+            opacity: 0.8;
+            cursor: default;
+        }
+
+    /* --- THEMED BUTTONS --- */
+    #quiz-selection-page .lecture-1-button  { background: linear-gradient(145deg, rgba(14, 165, 233, 0.45), rgba(37, 99, 235, 0.6)); }
+       
+        .explanation {
+             font-size: 0.9em;
+             margin-top: 10px;
+             padding: 8px;
+             background-color: rgba(255, 255, 255, 0.05);
+             border-radius: 5px;
+             line-height: 1.4;
+             text-align: left;
+             color: #D1D5DB;
+        }
+        .explanation strong { color: #ffffff; }
+
+        /* --- QUIZ SPECIFIC COLOR OVERRIDES --- */
+    #lecture-1-card { background: rgba(14, 165, 233, 0.35); box-shadow: 0 8px 25px rgba(14, 165, 233, 0.25); }
+    #lecture-1-card .quiz-button { background: linear-gradient(145deg, rgba(14, 165, 233, 0.7), rgba(37, 99, 235, 0.7)); border-color: rgba(191, 219, 254, 0.55); }
+    #lecture-1-card .retry-quiz-button { background: rgba(56, 189, 248, 0.2); border-color: rgba(191, 219, 254, 0.45); }
+    #lecture-1-quiz-page { background-color: #0F172A; }
+    #lecture-1-quiz-page .header { background: linear-gradient(135deg, #0EA5E9, #2563EB); }
+    #lecture-1-quiz-page .progress-bar { background: linear-gradient(90deg, #BAE6FD, #2563EB); }
+    #lecture-1-quiz-page .links a { color: #DBEAFE; }
+    #lecture-1-quiz-page .links a:hover { color: #EFF6FF; }
+    #lecture-1-quiz-page .quiz-button,
+    #lecture-1-quiz-page .options button,
+    #lecture-1-quiz-page .next-button,
+    #lecture-1-quiz-page .retry-button,
+    #lecture-1-quiz-page .celebrate-button,
+    #lecture-1-quiz-page .back-button { background: rgba(37, 99, 235, 0.25); border-color: rgba(191, 219, 254, 0.35); }
+
+    #lecture-2-card { background: rgba(124, 58, 237, 0.35); box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25); }
+    #lecture-2-card .quiz-button { background: linear-gradient(145deg, rgba(167, 139, 250, 0.7), rgba(124, 58, 237, 0.7)); border-color: rgba(221, 214, 254, 0.55); }
+    #lecture-2-card .retry-quiz-button { background: rgba(196, 181, 253, 0.2); border-color: rgba(221, 214, 254, 0.45); }
+    #lecture-2-quiz-page { background-color: #312E81; }
+    #lecture-2-quiz-page .header { background: linear-gradient(135deg, #7C3AED, #5B21B6); }
+    #lecture-2-quiz-page .progress-bar { background: linear-gradient(90deg, #DDD6FE, #5B21B6); }
+    #lecture-2-quiz-page .links a { color: #EDE9FE; }
+    #lecture-2-quiz-page .links a:hover { color: #F5F3FF; }
+    #lecture-2-quiz-page .quiz-button,
+    #lecture-2-quiz-page .options button,
+    #lecture-2-quiz-page .next-button,
+    #lecture-2-quiz-page .retry-button,
+    #lecture-2-quiz-page .celebrate-button,
+    #lecture-2-quiz-page .back-button { background: rgba(124, 58, 237, 0.25); border-color: rgba(221, 214, 254, 0.35); }
+
+    #lecture-3-card { background: rgba(20, 184, 166, 0.35); box-shadow: 0 8px 25px rgba(20, 184, 166, 0.25); }
+    #lecture-3-card .quiz-button { background: linear-gradient(145deg, rgba(45, 212, 191, 0.7), rgba(15, 118, 110, 0.7)); border-color: rgba(153, 246, 228, 0.55); }
+    #lecture-3-card .retry-quiz-button { background: rgba(45, 212, 191, 0.2); border-color: rgba(153, 246, 228, 0.45); }
+    #lecture-3-quiz-page { background-color: #064E3B; }
+    #lecture-3-quiz-page .header { background: linear-gradient(135deg, #14B8A6, #0F766E); }
+    #lecture-3-quiz-page .progress-bar { background: linear-gradient(90deg, #99F6E4, #0F766E); }
+    #lecture-3-quiz-page .links a { color: #CCFBF1; }
+    #lecture-3-quiz-page .links a:hover { color: #ECFEFF; }
+    #lecture-3-quiz-page .quiz-button,
+    #lecture-3-quiz-page .options button,
+    #lecture-3-quiz-page .next-button,
+    #lecture-3-quiz-page .retry-button,
+    #lecture-3-quiz-page .celebrate-button,
+    #lecture-3-quiz-page .back-button { background: rgba(15, 118, 110, 0.25); border-color: rgba(153, 246, 228, 0.35); }
+
+    #lecture-4-card { background: rgba(249, 115, 22, 0.35); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.25); }
+    #lecture-4-card .quiz-button { background: linear-gradient(145deg, rgba(251, 191, 36, 0.7), rgba(249, 115, 22, 0.7)); border-color: rgba(254, 215, 170, 0.55); }
+    #lecture-4-card .retry-quiz-button { background: rgba(251, 191, 36, 0.2); border-color: rgba(254, 215, 170, 0.45); }
+    #lecture-4-quiz-page { background-color: #7C2D12; }
+    #lecture-4-quiz-page .header { background: linear-gradient(135deg, #F97316, #C2410C); }
+    #lecture-4-quiz-page .progress-bar { background: linear-gradient(90deg, #FED7AA, #C2410C); }
+    #lecture-4-quiz-page .links a { color: #FFEDD5; }
+    #lecture-4-quiz-page .links a:hover { color: #FFF7ED; }
+    #lecture-4-quiz-page .quiz-button,
+    #lecture-4-quiz-page .options button,
+    #lecture-4-quiz-page .next-button,
+    #lecture-4-quiz-page .retry-button,
+    #lecture-4-quiz-page .celebrate-button,
+    #lecture-4-quiz-page .back-button { background: rgba(194, 65, 12, 0.25); border-color: rgba(254, 215, 170, 0.35); }
+
+        /* --- Styles for Celebration Page --- */
+        #celebration-page {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1F2937, #111827);
+            color: #f7fafc;
+            text-align: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(2.5rem, 6vw, 4rem);
+            overflow: hidden;
+            gap: clamp(1.5rem, 4vw, 2.5rem);
+        }
+         #celebration-page h1 {
+             font-size: clamp(2.4rem, 5vw, 3.5rem);
+             font-weight: 700;
+             margin-bottom: 0;
+             color: #34D399;
+             text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+         }
+         #celebration-page p {
+             font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+             margin-bottom: 0;
+             color: #E5E7EB;
+         }
+         #celebration-page .back-button {
+             padding: 14px 35px;
+             border-radius: 50px;
+             font-size: 1.2em;
+             margin: 0;
+         }
+
+    /* Responsive adjustments */
+         @media (max-width: 768px) {
+                         #quiz-selection-page { padding: clamp(1rem, 6vw, 1.5rem); }
+                         #quiz-selection-page .hub-header { padding: clamp(1.1rem, 4.5vw, 1.65rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.4rem; width: 100%; }
+                         #quiz-selection-page .quiz-card { padding: clamp(1.15rem, 4.5vw, 1.55rem); }
+                         .page-section .header {
+                             --header-inline-padding: clamp(0.9rem, 4.5vw, 1.35rem);
+                             padding: clamp(0.9rem, 4.5vw, 1.35rem) var(--header-inline-padding);
+                             gap: clamp(0.6rem, 3.5vw, 0.9rem);
+                             width: min(94vw, 520px);
+                             margin-left: auto;
+                             margin-right: auto;
+                         }
+                         .page-section .header-top { flex-direction: column; align-items: stretch; gap: clamp(0.55rem, 3vw, 0.85rem); }
+                         .page-section .header-controls { width: 100%; flex-direction: column; align-items: stretch; gap: clamp(0.6rem, 3.2vw, 0.9rem); }
+                         .page-section .header h1 { font-size: clamp(1.32rem, 3.5vw, 1.55rem); text-align: center; }
+                         .page-section .header-controls > * { width: min(100%, 360px); margin-left: auto; margin-right: auto; }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .quiz-container { margin: clamp(1rem, 5vw, 1.45rem) auto; padding: clamp(1.05rem, 4.5vw, 1.55rem); border-radius: 14px; width: min(94vw, 520px); }
+                         .page-section .options { grid-template-columns: 1fr; width: 100%; }
+                         .page-section .question { font-size: clamp(1.05rem, 4vw, 1.35rem); }
+                         .page-section .options button { font-size: 0.95rem; padding: clamp(0.85rem, 3.4vw, 0.95rem); }
+                         .page-section .next-button { padding: clamp(0.8rem, 3.4vw, 0.95rem); font-size: 0.95rem; }
+                         .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: clamp(0.7rem, 3.2vw, 0.9rem) clamp(1.1rem, 4vw, 1.4rem); font-size: 0.9rem; }
+                         .explanation { font-size: 0.85em; }
+                         .timer-container { font-size: 0.95rem; padding: clamp(0.45rem, 2.8vw, 0.6rem) clamp(0.55rem, 3vw, 0.7rem); justify-content: space-between; max-width: 360px; }
+                         .mode-toggle { width: min(100%, 360px); justify-content: space-between; font-size: 0.9rem; padding: clamp(0.5rem, 3.2vw, 0.65rem) clamp(0.8rem, 3.5vw, 1rem); margin-left: auto; margin-right: auto; }
+                         .mode-toggle input { width: clamp(2rem, 8.5vw, 2.3rem); height: clamp(0.9rem, 4vw, 1.1rem); }
+                         .mode-toggle input::after { width: clamp(0.65rem, 3.2vw, 0.85rem); height: clamp(0.65rem, 3.2vw, 0.85rem); }
+                         #celebration-page h1 { font-size: clamp(2.2rem, 6vw, 2.8rem); }
+                         #celebration-page p { font-size: clamp(1.1rem, 4vw, 1.3rem); }
+                         #celebration-page .back-button { font-size: 1.05rem; padding: 12px 30px; }
+                }
+         @media (max-width: 640px) {
+                         .page-section { padding-inline: clamp(0.6rem, 4.5vw, 1rem); padding-top: clamp(0.6rem, 5vw, 1.2rem); padding-bottom: clamp(0.9rem, 6vw, 1.9rem); }
+                         .page-section .header { margin: 0 auto clamp(0.45rem, 5vw, 0.85rem); width: min(92vw, 420px); }
+                         .page-section .quiz-container { padding: clamp(0.95rem, 5vw, 1.55rem); width: min(92vw, 420px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .links { gap: clamp(0.7rem, 4vw, 1rem); flex-wrap: wrap; }
+                         .page-section .links a { font-size: clamp(0.92rem, 3.4vw, 1.02rem); }
+                         .page-section .header-controls > * { width: min(100%, 320px); }
+                         .timer-container { max-width: 320px; }
+                         .mode-toggle { max-width: 320px; }
+                         #quiz-selection-page { padding: clamp(0.45rem, 4.5vw, 0.85rem); }
+                         #quiz-selection-page .hub-header { width: min(92vw, 420px); padding: clamp(0.45rem, 3.5vw, 0.85rem) clamp(0.6rem, 4vw, 1rem); margin: 0 auto clamp(0.65rem, 4.5vw, 1.1rem); border-radius: clamp(10px, 3.8vw, 14px); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.1rem, 4.6vw, 1.4rem); letter-spacing: 0.01em; line-height: 1.15; }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: clamp(1rem, 4.6vw, 1.4rem); justify-content: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.95rem, 5vw, 1.4rem); border-radius: clamp(16px, 4.5vw, 20px); }
+                         #quiz-selection-page .quiz-button { font-size: clamp(0.95rem, 3.8vw, 1rem); padding: clamp(0.75rem, 3.8vw, 0.95rem); }
+    }
+         @media (max-width: 480px) {
+                         #quiz-selection-page { padding: clamp(0.3rem, 6vw, 0.65rem); }
+                         #quiz-selection-page .hub-header { width: min(90vw, 360px); padding: clamp(0.4rem, 5.5vw, 0.75rem) clamp(0.55rem, 6vw, 0.9rem); border-radius: clamp(10px, 5vw, 14px); margin: 0 auto clamp(0.55rem, 6vw, 0.95rem); box-shadow: 0 3px 12px rgba(185, 28, 28, 0.16); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.05rem, 5.8vw, 1.35rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: 1fr; gap: clamp(0.8rem, 5vw, 1.1rem); justify-items: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.9rem, 6vw, 1.25rem); width: min(92vw, 370px); }
+                         .page-section .header-controls > * { width: min(100%, 300px); }
+                         .timer-container { max-width: 300px; }
+                         .mode-toggle { max-width: 300px; }
+                         .page-section .header { width: min(90vw, 360px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .quiz-container { width: min(90vw, 360px); }
+                         #quiz-selection-page .quiz-card h2 { font-size: clamp(1.15rem, 6vw, 1.3rem); }
+                         #quiz-selection-page .quiz-button { font-size: 1rem; padding: 0.9rem; }
+             body { font-size: 14px; }
+             .page-section .header {
+                 --header-inline-padding: 15px;
+                 padding: 15px var(--header-inline-padding);
+             }
+             .page-section .header-top { align-items: stretch; }
+             .page-section .header-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+                         .page-section .header h1 { font-size: clamp(1.2rem, 6vw, 1.35rem); margin-bottom: 0; }
+             .timer-container { font-size: 0.9em; padding: 3px 6px; }
+                         .page-section .quiz-container { margin: 10px auto; padding: 15px; border-radius: 12px; }
+                         .page-section .options { width: 100%; }
+                         .page-section .question { font-size: 1.1em; margin-bottom: 15px; }
+             .page-section .options button { font-size: 0.9rem; padding: 12px; margin: 6px 0; }
+             .page-section .next-button { padding: 12px; font-size: 0.9rem; }
+             .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: 10px 18px; font-size: 0.9rem; }
+             .page-section .links a { font-size: 1em; }
+             .explanation { font-size: 0.8em; }
+                        #celebration-page h1 { font-size: 2.2em; }
+                            #celebration-page p { font-size: 1.1em; }
+                            #celebration-page .back-button { font-size: 1em; padding: 10px 25px; }
+                        .quiz-card .quiz-metrics { padding: 0.9rem; }
+                        .page-section .header-controls { gap: clamp(0.6rem, 4vw, 0.9rem); }
+                        .page-section .timer-container { width: 100%; justify-content: center; }
+                        .page-section .mode-toggle { gap: clamp(0.45rem, 3vw, 0.6rem); }
+        }
+
+        @media (max-width: 430px) and (max-height: 940px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.45rem, 5vw, 0.85rem);
+            }
+            body { font-size: 14px; }
+            .page-section {
+                padding: clamp(0.45rem, 5vw, 0.85rem) clamp(0.5rem, 6vw, 0.9rem) clamp(0.8rem, 6vw, 1.2rem);
+            }
+            .page-section .header,
+            .page-section .progress-bar-container,
+            .page-section .quiz-container {
+                width: 100%;
+                max-width: 350px;
+            }
+            .page-section .header {
+                --header-inline-padding: clamp(0.75rem, 5vw, 1rem);
+                padding: clamp(0.75rem, 5vw, 1rem) var(--header-inline-padding);
+            }
+            .page-section .quiz-container { padding: clamp(0.85rem, 5vw, 1.2rem); margin: clamp(0.75rem, 5vw, 1.2rem) auto; }
+            .page-section .header-controls > * { width: 100%; }
+            .timer-container,
+            .mode-toggle { max-width: 100%; }
+            #quiz-selection-page .hub-header,
+            #quiz-selection-page .quiz-card { width: 100%; max-width: 350px; }
+            #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 5vw, 1.15rem); }
+            .page-section .question { font-size: clamp(1rem, 5.4vw, 1.2rem); }
+            .page-section .options button { padding: clamp(0.75rem, 5vw, 0.95rem); font-size: 0.95rem; }
+            .page-section .next-button,
+            .page-section .retry-button,
+            .page-section .back-button,
+            .page-section .celebrate-button { padding: clamp(0.7rem, 5vw, 0.9rem) clamp(1rem, 6vw, 1.4rem); font-size: 0.95rem; }
+        }
+
+                @media (max-width: 360px) {
+                        .page-section .header h1 { font-size: clamp(1.1rem, 7vw, 1.3rem); }
+                        .page-section .question { font-size: clamp(1rem, 5.8vw, 1.2rem); }
+                        .page-section .options button { font-size: 0.85rem; padding: 11px; }
+                    .page-section .timer-container { font-size: 0.83rem; padding: 4px 6px; }
+                    .page-section .links a { font-size: 0.92rem; }
+                    #quiz-selection-page { padding: clamp(0.25rem, 6vw, 0.5rem); }
+                    #quiz-selection-page .hub-header { width: min(88vw, 320px); padding: clamp(0.35rem, 5.5vw, 0.7rem) clamp(0.5rem, 6vw, 0.8rem); margin: 0 auto clamp(0.45rem, 6vw, 0.75rem); }
+                    #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 6vw, 1.1rem); width: 100%; max-width: 320px; }
+                    .page-section .header { width: min(88vw, 320px); }
+                    .page-section .progress-bar-container {
+                        width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                        margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                    }
+                    .page-section .quiz-container { width: min(88vw, 320px); }
+                    .page-section .header-controls > * { width: min(100%, 280px); }
+                    .timer-container { max-width: 280px; }
+                    .mode-toggle { max-width: 280px; }
+                }
+
+    </style>
+</head>
+<body>
+    <div id="quiz-selection-page" class="page-section">
+        <div class="hub-header">
+             <h1>Tests &amp; Measurements Quiz Hub</h1>
+        </div>
+        <div class="quiz-grid">
+            <div id="lecture-1-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 1: Measurement Foundations</h2>
+                <div class="quiz-metrics" id="lecture-1-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-1-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-1-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-1-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-1-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-1-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button lecture-1-button" onclick="showQuizPage('lecture-1')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-1')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-2-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 2: Reliability &amp; Validity</h2>
+                <div class="quiz-metrics" id="lecture-2-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-2-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-2-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-2-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-2-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-2-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-2')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-2')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-3-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 3: Clinical Outcome Measures</h2>
+                <div class="quiz-metrics" id="lecture-3-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-3-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-3-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-3-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-3-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-3-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-3')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-3')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-4-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 4: Elbow &amp; Forearm MMT</h2>
+                <div class="quiz-metrics" id="lecture-4-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-4-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-4-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-4-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-4-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-4-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-4')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-4')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <!-- Other lecture cards can be added here if needed -->
+        </div>
+    </div>
+
+    <div id="lecture-1-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Measurement Foundations Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-1-practice-toggle">
+                        <input type="checkbox" id="lecture-1-practice-toggle" onchange="togglePracticeMode('lecture-1', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-1-timer" class="timer-display">60</span>
+                        <span id="lecture-1-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-1-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-1-question-progress" class="question-progress"></div>
+            <div id="lecture-1-question" class="question"></div>
+            <div id="lecture-1-options" class="options"></div>
+            <div id="lecture-1-feedback" class="feedback"></div>
+            <button id="lecture-1-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-3-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Clinical Outcome Measures Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-3-practice-toggle">
+                        <input type="checkbox" id="lecture-3-practice-toggle" onchange="togglePracticeMode('lecture-3', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-3-timer" class="timer-display">60</span>
+                        <span id="lecture-3-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-3-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-3-question-progress" class="question-progress"></div>
+            <div id="lecture-3-question" class="question"></div>
+            <div id="lecture-3-options" class="options"></div>
+            <div id="lecture-3-feedback" class="feedback"></div>
+            <button id="lecture-3-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-2-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Reliability &amp; Validity Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-2-practice-toggle">
+                        <input type="checkbox" id="lecture-2-practice-toggle" onchange="togglePracticeMode('lecture-2', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-2-timer" class="timer-display">60</span>
+                        <span id="lecture-2-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-2-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-2-question-progress" class="question-progress"></div>
+            <div id="lecture-2-question" class="question"></div>
+            <div id="lecture-2-options" class="options"></div>
+            <div id="lecture-2-feedback" class="feedback"></div>
+            <button id="lecture-2-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-4-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Elbow &amp; Forearm MMT Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-4-practice-toggle">
+                        <input type="checkbox" id="lecture-4-practice-toggle" onchange="togglePracticeMode('lecture-4', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-4-timer" class="timer-display">60</span>
+                        <span id="lecture-4-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-4-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-4-question-progress" class="question-progress"></div>
+            <div id="lecture-4-question" class="question"></div>
+            <div id="lecture-4-options" class="options"></div>
+            <div id="lecture-4-feedback" class="feedback"></div>
+            <button id="lecture-4-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="celebration-page" class="page-section">
+         <h1>Congratulations!</h1>
+         <p>You've perfectly completed the quiz!</p>
+         <button class="back-button" onclick="showHubPage()">Back to Quiz Hub</button>
+    </div>
+
+    <div id="explosion-overlay"></div>
+
+    <script>
+        // --- Shuffling Function (Fisher-Yates Algorithm) ---
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+          }
+        }
+
+        // --- Quiz Data Store ---
+        const quizData = {
+            'lecture-1': {
+                originalQuestions: [
+                    { question: "What is the primary purpose of Manual Muscle Testing (MMT)?", a: "To measure joint range of motion.", b: "To evaluate the function and strength of muscles.", c: "To assess bone density.", d: "To test a patient's pain tolerance.", correct: "b", explanation: "The document defines MMT as a clinical procedure used to \"evaluate the function and strength of individual muscles and muscle groups.\" (Page 4)" },
+                    { question: "Which type of muscle contraction involves the muscle lengthening while generating tension?", a: "Concentric", b: "Isometric", c: "Eccentric", d: "Isokinetic", correct: "c", explanation: "An eccentric contraction is when \"the muscle lengthens as the origin and insertion move farther apart.\" (Page 5)" },
+                    { question: "In an isometric contraction, what is the relationship between the muscle force and the external force?", a: "Muscle force is greater than the external force.", b: "Muscle force is less than the external force.", c: "Muscle force equals the external force.", d: "There is no external force.", correct: "c", explanation: "For an isometric contraction, \"The tension produced by the muscle force (MS) equals the external force.\" (Page 5)" },
+                    { question: "Which range of muscle work describes the movement from a fully stretched position to the midpoint of its full range?", a: "Inner Range", b: "Middle Range", c: "Outer Range", d: "Full Range", correct: "c", explanation: "The outer range is when \"The muscle moves from a fully stretched position to the midpoint of its full range.\" (Page 7)" },
+                    { question: "According to the factors affecting strength, at what age does strength typically peak?", a: "15-20 years", b: "20-30 years", c: "30-40 years", d: "40-50 years", correct: "b", explanation: "Strength \"peaks between 20-30 years, then declines due to muscle mass loss.\" (Page 8)" },
+                    { question: "Which of the following is a contraindication for performing MMT?", a: "Muscle imbalance", b: "Post-injury assessment", c: "Unhealed fracture", d: "Stroke-related weakness", correct: "c", explanation: "MMT should not be performed in cases of \"Unhealed fractures or joint dislocations.\" (Page 9)" },
+                    { question: "What is the first step in the diagnostic process in physical therapy?", a: "Data Organization", b: "Analysis & Interpretation", c: "Treatment Planning", d: "Data Collection (Examination)", correct: "d", explanation: "The diagnostic process begins with \"1 Data Collection (Examination): Gathering patient history, symptoms, and physical assessment data.\" (Page 11)" },
+                    { question: "What does palpation primarily help a therapist assess?", a: "Facial expressions", b: "Joint Range of Motion (ROM)", c: "Postural alignment", d: "Muscle contractions and tissue consistency", correct: "d", explanation: "Palpation is critical for \"Assessing muscle contractions, tissue consistency, and abnormalities.\" (Page 14)" },
+                    { question: "What is the recommended posture for a therapist to maintain a broad base of support?", a: "Feet together, knees locked.", b: "Feet shoulder-width apart, knees slightly flexed.", c: "Standing on one leg.", d: "Leaning forward with a rounded back.", correct: "b", explanation: "The recommended posture includes \"feet shoulder-width apart, knees slightly flexed\" to \"maintain a broad base of support for stability.\" (Page 15)" },
+                    { question: "A muscle strength grade of '3' indicates that the patient can move through the full available ROM against:", a: "Maximal resistance.", b: "Moderate resistance.", c: "Gravity only.", d: "No resistance, with gravity eliminated.", correct: "c", explanation: "Grade 3 is \"complete full available ROM against gravity, but without resistance.\" (Pages 22, 25)" },
+                    { question: "What muscle grade is assigned when there is a palpable muscle contraction but no joint motion?", a: "Grade 0", b: "Grade 1", c: "Grade 2", d: "Grade 3", correct: "b", explanation: "Grade 1 is a \"Palpable or observable muscle contraction without joint motion.\" (Page 22)" },
+                    { question: "In the 'Break Test' sequence, if a patient can complete the full ROM against gravity but cannot tolerate any manual resistance, what is their grade?", a: "5", b: "4", c: "3", d: "2", correct: "c", explanation: "The flowchart on page 24 shows that after full ROM against gravity, if the patient \"Can't tolerate any manual resistance,\" the grade is 3." },
+                    { question: "Where should the therapist apply resistance during MMT?", a: "Near the proximal end of the segment.", b: "Directly over the joint.", c: "Near the distal end of the segment.", d: "Over the muscle belly.", correct: "c", explanation: "The principle is to \"Apply resistance near the distal end of the segment being tested.\" (Page 26)" },
+                    { question: "What is an exception to the standard rule for applying resistance, as shown for hip rotators?", a: "Resistance is applied proximally.", b: "Resistance is applied through the hand on the distal forearm or lower leg.", c: "No resistance is applied.", d: "Resistance is applied parallel to the limb.", correct: "b", explanation: "For shoulder and hip rotators, resistance is \"applied through the hand placed on the distal forearm or lower leg.\" (Page 28)" },
+                    { question: "What is the first step in the procedure of a manual muscle test?", a: "Patient positioning.", b: "Explanation and Instruction.", c: "Stabilization.", d: "Assessment of the uninvolved limb.", correct: "b", explanation: "The procedures start with \"1. Explanation and Instruction.\" (Page 31)" },
+                    { question: "Why is it important to assess the uninvolved limb first?", a: "To fatigue the patient.", b: "To establish the patient's normal strength.", c: "To save time.", d: "To check for pain.", correct: "b", explanation: "Assessing the uninvolved limb first is done \"to establish the patient's normal strength (e.g., grade 5).\" (Page 31)" },
+                    { question: "Which of the following is NOT a method of stabilization during MMT?", a: "Patient's body weight.", b: "Therapist support.", c: "A slippery testing surface.", d: "External forces like straps.", correct: "c", explanation: "A \"Firm testing surface\" aids stabilization; a slippery surface does not. (Page 37)" },
+                    { question: "What are 'substitute movements' in the context of MMT?", a: "Correctly performed movements at the target joint.", b: "The patient refusing to perform the movement.", c: "Unintended movements at the assessed joint or other joints.", d: "Movements performed only in a gravity-eliminated position.", correct: "c", explanation: "Substitute movements occur when \"additional, unintended movements take place at the joint being assessed or at other joints.\" (Page 42)" },
+                    { question: "What is the purpose of a 'Screen Test' in MMT?", a: "To test every muscle in the body.", b: "To measure the patient's blood pressure.", c: "To streamline assessment and prevent patient fatigue.", d: "To diagnose neurological conditions.", correct: "c", explanation: "The Screen Test is used to \"streamline muscle strength assessment, minimizing unnecessary testing while preventing patient fatigue.\" (Page 44)" },
+                    { question: "Which muscle is a primary mover for shoulder flexion to 90 degrees?", a: "Posterior Deltoid", b: "Teres major", c: "Anterior Deltoid", d: "Lower trapezius", correct: "c", explanation: "The table on page 46 lists the Anterior Deltoid as a \"Primary mover\" for shoulder flexion." },
+                    { question: "In the against-gravity test for shoulder flexion (Grade 3), what is the starting position?", a: "Lying on the back.", b: "Lying on the side.", c: "Lying prone.", d: "Short sitting.", correct: "d", explanation: "For the Grade 3 test, \"The patient is short sitting.\" (Page 47)" },
+                    { question: "For a Grade 5 shoulder flexion test, resistance is applied and held for how long?", a: "1-2 seconds", b: "2-3 seconds", c: "3-4 seconds", d: "5-6 seconds", correct: "d", explanation: "The command for a Grade 5 test is to \"...hold for 6 sec.\" (Page 48)" },
+                    { question: "What is the patient's position for a gravity-eliminated test of shoulder flexion?", a: "Side-lying", b: "Prone", c: "Standing", d: "Sitting", correct: "a", explanation: "The gravity-eliminated test places the patient \"in a side-lying position.\" (Page 49)" },
+                    { question: "Where can the Coracobrachialis muscle be palpated?", a: "On the posterior aspect of the shoulder.", b: "Deep in the axilla, under the pectoralis major.", c: "Just distal to the lateral clavicle.", d: "On the medial border of the scapula.", correct: "b", explanation: "Palpation for the Coracobrachialis is \"Deep into the upper middle third of the arm, in the axilla, under the inferior border of the pectoralis major muscle.\" (Page 50)" },
+                    { question: "Which of the following is a common substitution when testing shoulder flexion?", a: "Shoulder extension.", b: "Leaning backward or elevating the shoulder girdle.", c: "Internally rotating the arm.", d: "Bending the elbow.", correct: "b", explanation: "A common substitution is when \"The patient may lean backward or try to elevate the shoulder girdle to assist in flexion.\" (Page 51)" },
+                    { question: "Which muscle is a prime mover for shoulder extension?", a: "Anterior Deltoid", b: "Pectoralis major", c: "Latissimus dorsi", d: "Coracobrachialis", correct: "c", explanation: "The table on page 52 lists the Latissimus dorsi as a \"Prime mover\" for shoulder extension." },
+                    { question: "What is the normal Range of Motion (ROM) for shoulder extension against gravity?", a: "0-30 degrees", b: "0-90 degrees", c: "0-45/60 degrees", d: "0-120 degrees", correct: "c", explanation: "For shoulder extension, the normal ROM is \"0-45/60.\" (Page 53)" },
+                    { question: "Where is resistance applied for a Grade 4 or 5 shoulder extension test?", a: "Proximal to the wrist.", b: "On the scapula.", c: "On the posterior head.", d: "Proximal to the elbow joint on the posteromedial aspect.", correct: "d", explanation: "Resistance is \"Applied proximal to the elbow joint on the posteromedial aspect of the arm.\" (Page 54)" },
+                    { question: "Which type of muscle contraction generates the most force?", a: "Concentric", b: "Isometric", c: "Eccentric", d: "Static", correct: "c", explanation: "Eccentric contractions \"produce more force than concentric\" and \"more force than isometric contractions.\" (Pages 5, 8)" },
+                    { question: "A grade of 2 in MMT means the patient can complete the full available ROM in which condition?", a: "Against maximal resistance.", b: "Against gravity.", c: "With gravity eliminated.", d: "Only partial ROM against gravity.", correct: "c", explanation: "Grade 2 is \"complete full available ROM gravity eliminated.\" (Page 25)" },
+                    { question: "What is the purpose of visual observation in a physical therapy assessment?", a: "To measure muscle temperature.", b: "To assess symmetry, posture, and movement compensations.", c: "To determine muscle fiber type.", d: "To locate bony landmarks.", correct: "b", explanation: "Visual observation assesses \"Symmetry & movement compensations\" and \"Postural alignment.\" (Page 13)" },
+                    { question: "A 'Break Test' involves asking the patient to:", a: "Move through the full range of motion as quickly as possible.", b: "Hold a position against the therapist's applied resistance.", c: "Lift the heaviest weight they can.", d: "Relax the muscle completely.", correct: "b", explanation: "The flowchart on page 24 shows the Break Test requires the patient to \"Hold against\" or \"Yield against\" manual resistance." },
+                    { question: "Which of the following is NOT a primary objective of the evaluation process?", a: "To establish a therapist-patient relationship.", b: "To provide a surgical recommendation.", c: "To develop an individualized treatment plan.", d: "To monitor progress and treatment effectiveness.", correct: "b", explanation: "The objectives focus on diagnosis and treatment planning within physical therapy, not surgical recommendations. (Page 10)" },
+                    { question: "Where would a therapist palpate the Teres major muscle?", a: "On the anterior shoulder.", b: "On the posterior wall of the axilla, lateral to the scapula.", c: "On the spine of the scapula.", d: "At the elbow joint.", correct: "b", explanation: "The Teres major is palpated at the \"posterior wall of the axilla lateral to the axillary border of the scapula.\" (Page 56)" },
+                    { question: "What is a key principle for therapist biomechanics during MMT?", a: "Stand as far from the patient as possible.", b: "Use spinal rotation for applying force.", c: "Maintain a neutral lordotic posture.", d: "Keep knees locked for stability.", correct: "c", explanation: "A key spinal protection technique is to \"Maintain a neutral lordotic posture to prevent strain.\" (Page 16)" }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-2': {
+                originalQuestions: [
+                    { question: "Which two muscles are the primary movers for shoulder flexion to 90 degrees?", a: "Anterior Deltoid and Pectoralis Major", b: "Coracobrachialis and Biceps Brachii", c: "Anterior Deltoid and Coracobrachialis", d: "Middle Deltoid and Supraspinatus", correct: "c", explanation: "The table on page 4 identifies the Anterior Deltoid and Coracobrachialis as the \"Primary movers\" for shoulder flexion." },
+                    { question: "What is the nerve supply for the Anterior Deltoid?", a: "Musculocutaneous nerve (C6,7)", b: "Axillary nerve (C5,6)", c: "Suprascapular nerve (C5)", d: "Thoracodorsal nerve (C6-C8)", correct: "b", explanation: "The Anterior Deltoid receives innervation from the Axillary nerve (C5,6). (Page 4)" },
+                    { question: "In the against-gravity test for shoulder flexion (Grade 3), what is the correct patient starting position?", a: "Supine with the arm at the side", b: "Prone with the arm off the edge of the table", c: "Standing with the arm in neutral", d: "Short sitting with the arm at the side", correct: "d", explanation: "The Grade 3 shoulder flexion test begins with the patient short sitting, arm at the side. (Page 7)" },
+                    { question: "Where should resistance be applied for a Grade 4 or 5 shoulder flexion test?", a: "Proximal to the wrist joint", b: "On the anterior aspect of the distal humerus", c: "Proximal to the elbow joint", d: "Directly on the shoulder", correct: "c", explanation: "For Grades 4 and 5, resistance is applied proximal to the elbow joint. (Page 8)" },
+                    { question: "Which of the following is a common substitution when a patient attempts shoulder flexion?", a: "Leaning forward", b: "Depressing the scapula", c: "Leaning backward or elevating the shoulder girdle", d: "Internally rotating the shoulder", correct: "c", explanation: "Patients often lean backward or elevate the shoulder girdle to aid flexion. (Page 11)" },
+                    { question: "Which muscle is NOT a prime mover for shoulder extension?", a: "Posterior Deltoid", b: "Latissimus Dorsi", c: "Teres Major", d: "Coracobrachialis", correct: "d", explanation: "Coracobrachialis acts as a shoulder flexor, not a prime mover for extension. (Page 12)" },
+                    { question: "What is the correct patient position for a Grade 3 (against gravity) shoulder extension test?", a: "Sitting", b: "Supine", c: "Side-lying", d: "Prone", correct: "d", explanation: "Grade 3 shoulder extension is tested with the patient prone. (Page 13)" },
+                    { question: "For a Grade 5 shoulder extension test, where is resistance applied?", a: "On the posterior wrist", b: "On the posteromedial aspect of the arm, proximal to the elbow", c: "On the scapula", d: "On the olecranon process", correct: "b", explanation: "Resistance is applied proximal to the elbow on the posteromedial arm. (Page 14)" },
+                    { question: "Which two muscles are the prime movers for shoulder abduction to 90 degrees?", a: "Anterior and Posterior Deltoid", b: "Deltoid (middle fibers) and Supraspinatus", c: "Teres Major and Teres Minor", d: "Infraspinatus and Supraspinatus", correct: "b", explanation: "The Middle Deltoid and Supraspinatus initiate abduction to 90 degrees. (Page 17)" },
+                    { question: "What is the nerve supply for the Supraspinatus muscle?", a: "Axillary nerve (C5,C6)", b: "Lower subscapular nerve (C6)", c: "Suprascapular nerve (C5)", d: "Musculocutaneous nerve (C6,7)", correct: "c", explanation: "Supraspinatus is innervated by the Suprascapular nerve (C5). (Page 17)" },
+                    { question: "Which of the following is a common substitution during a shoulder abduction test?", a: "Leaning the trunk to the opposite side", b: "Shoulder flexion", c: "Scapular depression", d: "Leaning the trunk to the same side", correct: "a", explanation: "Contralateral or ipsilateral trunk side flexion can substitute for true abduction. (Page 21)" },
+                    { question: "What is the primary mover for shoulder horizontal abduction?", a: "Anterior Deltoid", b: "Teres Major", c: "Posterior Deltoid", d: "Middle Deltoid", correct: "c", explanation: "Posterior Deltoid drives shoulder horizontal abduction. (Page 22)" },
+                    { question: "What is the starting position for a Grade 3 test of shoulder horizontal abduction?", a: "Supine, with the arm at 90 degrees flexion", b: "Sitting, with the arm at the side", c: "Prone, with the shoulder abducted to about 75° and the elbow flexed to 90°", d: "Side-lying, with the arm supported", correct: "c", explanation: "Grade 3 testing begins prone, shoulder abducted near 75°, elbow flexed to 90°. (Page 23)" },
+                    { question: "To test for shoulder horizontal abduction in a gravity-eliminated position (Grade 2), the patient should be:", a: "Prone", b: "Sitting", c: "Supine", d: "Hook-lying", correct: "b", explanation: "The Grade 2 position is seated for gravity elimination. (Page 25)" },
+                    { question: "What muscle is the prime mover for shoulder horizontal adduction?", a: "Latissimus Dorsi", b: "Pectoralis Major", c: "Teres Major", d: "Subscapularis", correct: "b", explanation: "Pectoralis Major powers shoulder horizontal adduction. (Page 26)" },
+                    { question: "For a Grade 3 test of shoulder horizontal adduction, the patient starts in which position?", a: "Prone, with the arm hanging off the table", b: "Sitting, with the arm flexed to 90 degrees", c: "Supine, with the shoulder abducted to 90° and the elbow flexed to 90°", d: "Side-lying, with the arm adducted across the chest", correct: "c", explanation: "Testing begins supine with the shoulder abducted to 90° and elbow flexed. (Page 27)" },
+                    { question: "Where can the Pectoralis Major be most easily palpated?", a: "On the posterior shoulder", b: "At the anterior axillary fold", c: "Near the clavicle", d: "On the lateral border of the scapula", correct: "b", explanation: "Palpation occurs at the anterior axillary fold. (Page 29)" },
+                    { question: "Which two muscles are the primary movers for shoulder external rotation?", a: "Supraspinatus and Teres Major", b: "Infraspinatus and Teres Minor", c: "Posterior Deltoid and Latissimus Dorsi", d: "Teres Major and Teres Minor", correct: "b", explanation: "Infraspinatus and Teres Minor drive external rotation. (Page 30)" },
+                    { question: "What is the nerve supply for the Teres Minor?", a: "Suprascapular nerve (C5, C6)", b: "Lower subscapular nerve (C6)", c: "Axillary nerve (C5,C6)", d: "Medial pectoral nerve (C6 to T1)", correct: "c", explanation: "Teres Minor receives innervation from the Axillary nerve (C5,C6). (Page 30)" },
+                    { question: "What is the patient's position for a Grade 3 test of shoulder external rotation?", a: "Supine", b: "Sitting", c: "Prone, with shoulder abducted to 90° and elbow flexed to 90°", d: "Side-lying", correct: "c", explanation: "Grade 3 external rotation is tested prone with the shoulder abducted and elbow flexed to 90°. (Page 31)" },
+                    { question: "During MMT for external rotation (Grades 4 & 5), where is resistance applied?", a: "On the posterior aspect of the humerus", b: "Proximal to the wrist joint on the posterior aspect of the forearm", c: "On the elbow", d: "On the medial border of the scapula", correct: "b", explanation: "Resistance is applied proximal to the wrist on the posterior forearm. (Page 32)" },
+                    { question: "Where can the Infraspinatus muscle be palpated?", a: "It is not palpable", b: "In the anterior axillary fold", c: "Over the body of the scapula, just inferior to the spine of the scapula", d: "Superior to the clavicle", correct: "c", explanation: "Palpation occurs over the scapula body just below the spine. (Page 33)" },
+                    { question: "Which muscle is the primary mover for shoulder internal rotation?", a: "Teres Minor", b: "Infraspinatus", c: "Pectoralis Major", d: "Subscapularis", correct: "d", explanation: "Subscapularis is the primary internal rotator of the shoulder. (Page 34)" },
+                    { question: "Which of the following muscles is a secondary mover for internal rotation?", a: "Teres Minor", b: "Supraspinatus", c: "Pectoralis Major", d: "Posterior Deltoid", correct: "c", explanation: "Secondary internal rotators include Pectoralis major, Teres major, Latissimus dorsi, and anterior deltoid. (Page 34)" },
+                    { question: "The patient position for a Grade 3 test of internal rotation is identical to which other test?", a: "Shoulder flexion", b: "Shoulder abduction", c: "Shoulder external rotation", d: "Shoulder horizontal adduction", correct: "c", explanation: "Grade 3 internal and external rotation share the prone, abducted shoulder position. (Page 35)" },
+                    { question: "Where is resistance applied for a Grade 4 or 5 shoulder internal rotation test?", a: "On the anterior humerus", b: "On the posterior forearm", c: "Proximal to the wrist joint on the anterior forearm", d: "On the posterior elbow", correct: "c", explanation: "Resistance is applied proximal to the wrist on the anterior forearm. (Page 36)" },
+                    { question: "What is a \"Quick test\" for the Subscapularis muscle?", a: "Apley's Scratch Test", b: "The Lift-Off Test", c: "The Drop Arm Test", d: "The Hawkins-Kennedy Test", correct: "b", explanation: "The Lift-Off Test screens Subscapularis function quickly. (Page 38)" },
+                    { question: "Why is the Supraspinatus muscle difficult to palpate?", a: "It is a very small muscle", b: "It is too deep", c: "It is covered by the deltoid", d: "Both b and c", correct: "b", explanation: "The Supraspinatus lies too deep to palpate effectively. (Page 21)" },
+                    { question: "The nerve supply for the Coracobrachialis is the:", a: "Axillary nerve", b: "Musculocutaneous nerve", c: "Suprascapular nerve", d: "Medial pectoral nerve", correct: "b", explanation: "Coracobrachialis is innervated by the Musculocutaneous nerve (C6,7). (Page 4)" },
+                    { question: "To test shoulder abduction in a gravity-eliminated position (Grade 2), the patient should be:", a: "Sitting", b: "Prone", c: "Standing", d: "Supine", correct: "d", explanation: "Grade 2 abduction testing is performed with the patient supine. (Page 20)" },
+                    { question: "Where is the Posterior Deltoid palpated during a horizontal abduction test?", a: "Superior to the acromion process", b: "In the posterior axillary fold", c: "Inferior to the lateral aspect of the spine of the scapula", d: "On the anterior aspect of the shoulder", correct: "c", explanation: "Palpation is inferior to the lateral spine of the scapula. (Page 25)" },
+                    { question: "The patient's position for a gravity-eliminated (Grade 2) test for shoulder horizontal adduction is:", a: "Supine", b: "Prone", c: "Sitting", d: "Side-lying", correct: "c", explanation: "Gravity-eliminated horizontal adduction is performed seated. (Page 29)" },
+                    { question: "The Teres Minor is not palpable, according to the lecture notes.", a: "True", b: "False", c: "Only palpable with special equipment", d: "Palpable only after warming up", correct: "a", explanation: "The notes state explicitly that Teres minor is not palpable. (Page 33)" },
+                    { question: "What is the normal ROM for shoulder internal rotation?", a: "0-45 degrees", b: "0-90/100 degrees", c: "0-60/90 degrees", d: "0-80/90 degrees", correct: "c", explanation: "The internal rotation section lists the range as 0-60/90 degrees. (Page 34)" },
+                    { question: "Is the Subscapularis muscle easily palpable?", a: "Yes, in the axilla", b: "Yes, on the anterior scapula", c: "No, it is too deep to palpate", d: "Only on very thin patients", correct: "c", explanation: "The notes emphasize that Subscapularis is too deep to palpate. (Page 37)" }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-3': {
+                originalQuestions: [
+                    { question: "The scapulothoracic (ST) articulation is best described as a:", a: "Synovial joint", b: "Fibrous joint", c: "Functional joint", d: "Cartilaginous joint", correct: "c", explanation: "The scapulothoracic interface lacks typical joint structures and is considered a functional joint. (Page 4)" },
+                    { question: "What is the generally accepted ratio for Scapulohumeral Rhythm?", a: "1° of GH motion for every 1° of scapular motion", b: "2° of GH motion for every 1° of scapular motion", c: "1° of GH motion for every 2° of scapular motion", d: "3° of GH motion for every 1° of scapular motion", correct: "b", explanation: "Scapulohumeral rhythm typically follows a 2-to-1 GH-to-scapular motion ratio. (Page 5)" },
+                    { question: "For full shoulder elevation, how many degrees of motion come from the scapulothoracic joint?", a: "120°", b: "90°", c: "60°", d: "30°", correct: "c", explanation: "Sixty degrees of the elevation arc arise from scapulothoracic motion. (Page 5)" },
+                    { question: "What is the prime mover for scapular abduction and upward rotation?", a: "Pectoralis Minor", b: "Upper Trapezius", c: "Serratus Anterior", d: "Rhomboids", correct: "c", explanation: "Serratus anterior is identified as the prime mover for scapular abduction with upward rotation. (Page 6)" },
+                    { question: "What is the nerve supply for the Serratus Anterior muscle?", a: "Dorsal scapular nerve (C5)", b: "Spinal accessory nerve (CN XI)", c: "Long thoracic nerve (C5-C7)", d: "Axillary nerve (C5, C6)", correct: "c", explanation: "Serratus anterior receives innervation from the long thoracic nerve (C5-C7). (Page 6)" },
+                    { question: "Weakness of the Serratus Anterior can lead to what clinical sign?", a: "Shoulder shrugging", b: "Winging of the scapula", c: "Dropped shoulder", d: "Inability to adduct the arm", correct: "b", explanation: "Serratus anterior weakness commonly presents as scapular winging. (Page 6)" },
+                    { question: "For a Grade 3 test of the Serratus Anterior, the patient is positioned in:", a: "Sitting", b: "Prone", c: "Standing", d: "Supine, with the arm flexed", correct: "d", explanation: "Grade 3 serratus testing is performed supine with the arm flexed toward the ceiling. (Page 8)" },
+                    { question: "Where is resistance applied for a Grade 4 or 5 test of the Serratus Anterior?", a: "On the distal end of the forearm", b: "On the distal end of the humerus", c: "Directly on the scapula", d: "On the hand", correct: "b", explanation: "Resistance is applied to the distal humerus for higher-grade serratus testing. (Page 9)" },
+                    { question: "Where should the therapist palpate for the Serratus Anterior?", a: "Along the medial border of the scapula", b: "Superior to the spine of the scapula", c: "In the supraclavicular fossa", d: "Along the mid-axillary line adjacent to the inferior angle of the scapula", correct: "d", explanation: "Palpation occurs along the mid-axillary line near the inferior scapular angle. (Page 10)" },
+                    { question: "What are the two prime movers for shoulder elevation (\"shrugging\")?", a: "Serratus Anterior and Pectoralis Minor", b: "Upper Trapezius and Levator Scapulae", c: "Middle and Lower Trapezius", d: "Rhomboids Major and Minor", correct: "b", explanation: "Shoulder elevation is driven by the upper trapezius and levator scapulae. (Page 12)" },
+                    { question: "What is the nerve supply for the Upper Trapezius?", a: "Dorsal scapular nerve", b: "Long thoracic nerve", c: "Spinal accessory nerve (CN XI)", d: "Suprascapular nerve", correct: "c", explanation: "The upper trapezius is innervated by the spinal accessory nerve. (Page 12)" },
+                    { question: "For a Grade 3 test of shoulder elevation, the patient is positioned in:", a: "Prone", b: "Supine", c: "Sitting", d: "Side-lying", correct: "c", explanation: "Against-gravity shoulder elevation testing uses a seated position. (Page 13)" },
+                    { question: "In a gravity-eliminated test for shoulder elevation (Grade 2), the patient is positioned in:", a: "Sitting", b: "Prone", c: "Supine", d: "Standing", correct: "b", explanation: "Grade 2 testing for elevation places the patient prone. (Page 15)" },
+                    { question: "What are the prime movers for scapular adduction (retraction)?", a: "Upper and Lower Trapezius", b: "Serratus Anterior", c: "Middle Fiber of Trapezius and Rhomboids Major", d: "Levator Scapulae", correct: "c", explanation: "Middle trapezius and rhomboids major retract the scapula. (Page 16)" },
+                    { question: "What is the patient's position for a Grade 3 test of the Middle Trapezius?", a: "Prone, with the shoulder abducted to 90 degrees", b: "Sitting, with arms at the sides", c: "Supine, with arms overhead", d: "Standing, with hands on hips", correct: "a", explanation: "Grade 3 middle trapezius testing begins prone with the shoulder abducted to 90°. (Page 17)" },
+                    { question: "For a Grade 4 or 5 test of scapular adduction, where is resistance applied?", a: "On the scapula", b: "On the elbow", c: "On the distal forearm", d: "On the proximal humerus", correct: "c", explanation: "Resistance is applied at the distal forearm for higher-grade tests. (Page 18)" },
+                    { question: "Where should the therapist palpate for the Middle Trapezius?", a: "Between the medial border of the scapula and the vertebrae, above the spine of the scapula", b: "At the inferior angle of the scapula", c: "In the axilla", d: "Along the clavicle", correct: "a", explanation: "Palpation lies between the scapular border and vertebrae above the spine. (Page 19)" },
+                    { question: "What is the prime mover for scapular adduction and depression?", a: "Middle Trapezius", b: "Rhomboids Major", c: "Latissimus Dorsi", d: "Lower Trapezius", correct: "d", explanation: "Lower trapezius drives combined adduction and depression. (Page 20)" },
+                    { question: "What is the correct starting position for a Grade 3 test of the Lower Trapezius?", a: "Sitting, with arms overhead", b: "Supine, with arm flexed to 90 degrees", c: "Prone, with arm overhead to about 145° of elevation and abduction", d: "Side-lying, with arm supported", correct: "c", explanation: "Grade 3 lower trapezius testing uses a prone position with the arm elevated ~145°. (Page 21)" },
+                    { question: "For a Grade 4 or 5 test of the Lower Trapezius, resistance is provided over the:", a: "Scapula", b: "Elbow", c: "Distal forearm, just above the wrist", d: "Proximal humerus", correct: "c", explanation: "Resistance is applied over the distal forearm above the wrist. (Page 22)" },
+                    { question: "Where is the Lower Trapezius palpated?", a: "It is too deep to palpate.", b: "Superior to the spine of the scapula.", c: "Medial to the inferior angle of the scapula along a line to T12.", d: "Along the mid-axillary line.", correct: "c", explanation: "Palpate medial to the inferior scapular angle along a line toward T12. (Page 23)" },
+                    { question: "Which muscles are the prime movers for scapular adduction and downward rotation?", a: "Lower Trapezius and Latissimus Dorsi", b: "Rhomboids Major and Rhomboids Minor", c: "Levator Scapulae and Upper Trapezius", d: "Serratus Anterior and Pectoralis Minor", correct: "b", explanation: "Rhomboids major and minor execute adduction with downward rotation. (Page 24)" },
+                    { question: "What is the nerve supply for the Rhomboids (Major and Minor)?", a: "Long thoracic nerve", b: "Spinal accessory nerve", c: "Axillary nerve", d: "Dorsal scapular nerve (C5)", correct: "d", explanation: "Both rhomboid muscles are innervated by the dorsal scapular nerve (C5). (Page 24)" },
+                    { question: "What is the starting position for a Grade 3 test of the Rhomboids (adduction and downward rotation)?", a: "Sitting, with arms crossed", b: "Supine, with arm adducted", c: "Prone, with the dorsum of the hand placed over the buttock of the non-test side", d: "Standing, with the hand behind the head", correct: "c", explanation: "Grade 3 rhomboid testing places the patient prone with the hand on the opposite buttock. (Page 25)" },
+                    { question: "For a Grade 4 or 5 test of the Rhomboids, resistance is applied where?", a: "On the distal forearm", b: "On the medial border of the scapula", c: "On the acromion", d: "Cupped around the flexed elbow", correct: "d", explanation: "Resistance is delivered by cupping around the flexed elbow. (Page 26)" },
+                    { question: "In the context of scapular movement, what does \"protraction\" mean?", a: "Elevation", b: "Depression", c: "Adduction (retraction)", d: "Abduction", correct: "d", explanation: "Protraction corresponds to scapular abduction. (Page 3)" },
+                    { question: "The Push-up test shown on page 11 is used to assess which muscle?", a: "Rhomboids", b: "Lower Trapezius", c: "Serratus Anterior", d: "Middle Trapezius", correct: "c", explanation: "The illustrated push-up test evaluates serratus anterior strength. (Page 11)" },
+                    { question: "Which muscle is considered too deep to palpate during the shoulder elevation test?", a: "Upper Trapezius", b: "Rhomboids", c: "Levator Scapulae", d: "Serratus Anterior", correct: "c", explanation: "Levator scapulae is noted as too deep to palpate during elevation testing. (Page 13)" },
+                    { question: "To test the Rhomboids in a gravity-eliminated position (Grade 2), the patient should be:", a: "Prone", b: "Supine", c: "Sitting", d: "Side-lying", correct: "c", explanation: "Grade 2 rhomboid testing is conducted with the patient seated. (Page 27)" },
+                    { question: "The action of the Levator Scapulae includes elevation, adduction, and which other scapular motion?", a: "Upward rotation", b: "Downward rotation", c: "Protraction", d: "Depression", correct: "b", explanation: "Levator scapulae contributes to scapular downward rotation. (Page 12)" },
+                    { question: "The Upper and Lower Trapezius work with which other muscle to produce upward rotation of the scapula?", a: "Rhomboids", b: "Levator Scapulae", c: "Serratus Anterior", d: "Pectoralis Minor", correct: "c", explanation: "Trapezius segments coordinate with serratus anterior for upward rotation. (Page 6)" },
+                    { question: "The patient position for the gravity-eliminated (Grade 2) test of the Serratus Anterior is:", a: "Supine", b: "Prone", c: "Side-lying", d: "Sitting", correct: "d", explanation: "Grade 2 serratus testing is performed with the patient seated. (Page 10)" },
+                    { question: "The spinous processes of T2 to T5 serve as the origin for which muscle?", a: "Lower Trapezius", b: "Rhomboids Major", c: "Middle Trapezius", d: "Latissimus Dorsi", correct: "b", explanation: "Rhomboid major originates from the T2-T5 spinous processes. (Page 16)" },
+                    { question: "The command 'pull your arm up and bring your scapula down and in' is used to test which muscle group?", a: "Upper Trapezius and Levator Scapulae", b: "Serratus Anterior", c: "Rhomboids", d: "Middle Trapezius", correct: "c", explanation: "This command cues rhomboid adduction with downward rotation. (Page 25)" },
+                    { question: "Resistance for the scapular adduction (retraction) test is applied in the direction of:", a: "Scapular elevation", b: "Scapular depression", c: "Scapular adduction", d: "Scapular abduction", correct: "d", explanation: "Resistance opposes the motion via scapular abduction. (Page 18)" }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-4': {
+                originalQuestions: [
+                    { question: "Which of the following is considered a prime mover for elbow flexion?", a: "Triceps Brachii", b: "Anconeus", c: "Biceps Brachii", d: "Supinator", correct: "c", explanation: "The Biceps Brachii is listed as a prime mover for elbow flexion. (Page 3)" },
+                    { question: "What is the normal range of motion for elbow flexion?", a: "0°-90°", b: "0°-120°", c: "0°-145°/150°", d: "0°-180°", correct: "c", explanation: "The lecture notes cite 0°-145°/150° as the standard elbow flexion range. (Page 3)" },
+                    { question: "What is the nerve supply for the Biceps Brachii muscle?", a: "Radial nerve (C7, C8)", b: "Median nerve (C6, C7)", c: "Axillary nerve (C5, C6)", d: "Musculocutaneous nerve (C6)", correct: "d", explanation: "Biceps Brachii receives innervation from the Musculocutaneous nerve (C6). (Page 3)" },
+                    { question: "Besides elbow flexion, what is another primary function of the Biceps Brachii?", a: "Powerful supination of the forearm", b: "Pronation of the forearm", c: "Elbow extension", d: "Wrist flexion", correct: "a", explanation: "A key listed function is the powerful supination of the forearm. (Page 3)" },
+                    { question: "For a Grade 3 (against gravity) test of elbow flexion, the patient is positioned in:", a: "Sitting", b: "Prone", c: "Supine", d: "Standing", correct: "c", explanation: "The Grade 3 illustration shows the patient supine for against-gravity elbow flexion. (Page 4)" },
+                    { question: "Where is resistance applied for a Grade 4 or 5 test of elbow flexion?", a: "On the anterior upper arm", b: "Directly on the elbow joint", c: "Proximal to the wrist joint on the anterior forearm", d: "On the posterior forearm", correct: "c", explanation: "Resistance is applied proximal to the wrist on the anterior forearm. (Page 5)" },
+                    { question: "In a gravity-eliminated test for elbow flexion (Grade 2), the patient is positioned in:", a: "Supine with the arm at the side", b: "Sitting with the arm abducted and supported", c: "Prone with the arm hanging off the table", d: "Standing with the arm against a wall", correct: "b", explanation: "The Grade 2 setup uses a sitting position with the limb supported. (Page 6)" },
+                    { question: "The Brachialis muscle can be palpated:", a: "On the posterior arm", b: "Lateral to the biceps brachii tendon", c: "Medial to the biceps brachii tendon", d: "It is too deep to palpate", correct: "c", explanation: "Palpation is medial to the biceps brachii tendon. (Page 7)" },
+                    { question: "The Brachioradialis muscle is best palpated on the:", a: "Posteromedial forearm", b: "Anterolateral forearm just distal to the elbow crease", c: "Medial epicondyle", d: "Olecranon process", correct: "b", explanation: "Brachioradialis is palpated along the anterolateral forearm distal to the elbow. (Page 10)" },
+                    { question: "Which muscle is the prime mover for elbow extension?", a: "Biceps Brachii", b: "Brachialis", c: "Triceps Brachii", d: "Pronator Teres", correct: "c", explanation: "Triceps Brachii is cited as the prime mover for elbow extension. (Page 11)" },
+                    { question: "What is the nerve supply for the Triceps Brachii?", a: "Musculocutaneous nerve", b: "Median nerve", c: "Ulnar nerve", d: "Radial nerve (C7, C8)", correct: "d", explanation: "Triceps Brachii is innervated by the radial nerve (C7, C8). (Page 11)" },
+                    { question: "Where does the long head of the Triceps Brachii originate?", a: "Supraglenoid tubercle", b: "Infraglenoid tubercle", c: "Coracoid process", d: "Lateral humeral surface", correct: "b", explanation: "The long head originates from the infraglenoid tubercle of the scapula. (Page 11)" },
+                    { question: "All three heads of the Triceps Brachii insert onto the:", a: "Radial tuberosity", b: "Coronoid process of the ulna", c: "Olecranon process of the ulna", d: "Styloid process of the radius", correct: "c", explanation: "Each head inserts on the olecranon process of the ulna. (Page 11)" },
+                    { question: "What is the correct patient position for a Grade 3 test of the Triceps Brachii?", a: "Sitting with the arm at 90° flexion", b: "Prone with the arm hanging off the table", c: "Supine with the shoulder flexed to 90°", d: "Standing with the arm behind the back", correct: "c", explanation: "The against-gravity illustration shows the patient supine with the shoulder flexed to 90°. (Page 12)" },
+                    { question: "Where is resistance applied for a Grade 4 or 5 elbow extension test?", a: "Proximal to the wrist joint on the posterior forearm", b: "On the anterior forearm", c: "Directly on the olecranon", d: "On the posterior humerus", correct: "a", explanation: "Resistance is applied just proximal to the wrist on the posterior forearm. (Page 13)" },
+                    { question: "For a gravity-eliminated test of the Triceps (Grade 2), the patient is positioned in:", a: "Supine", b: "Prone", c: "Sitting with the arm supported on a table", d: "Side-lying", correct: "c", explanation: "The Grade 2 setup shows the patient seated with the limb supported. (Page 14)" },
+                    { question: "The Triceps tendon is best palpated:", a: "In the antecubital fossa", b: "Medial to the elbow", c: "Just proximal to the olecranon process", d: "On the head of the radius", correct: "c", explanation: "Palpation is just proximal to the olecranon process. (Page 14)" },
+                    { question: "What is the normal range of motion for forearm supination?", a: "0°-50°/60°", b: "0°-80°/90°", c: "0°-110°", d: "0°-135°", correct: "b", explanation: "Supination is documented as 0°-80°/90°. (Page 15)" },
+                    { question: "What muscle is the prime mover for pure supination of the forearm?", a: "Biceps Brachii", b: "Brachioradialis", c: "Supinator", d: "Flexor Carpi Radialis", correct: "c", explanation: "The Supinator is identified as the prime mover for pure supination. (Page 15)" },
+                    { question: "What is the nerve supply for the Supinator muscle?", a: "Median nerve (C6, C7)", b: "Radial nerve (C6, C7)", c: "Musculocutaneous nerve (C6)", d: "Ulnar nerve (C8, T1)", correct: "b", explanation: "Supinator receives innervation from the radial nerve (C6, C7). (Page 15)" },
+                    { question: "In an against-gravity test for supination (Grade 3), the patient is positioned in:", a: "Prone", b: "Supine", c: "Side-lying", d: "Sitting with the elbow flexed", correct: "d", explanation: "The Grade 3 image shows the patient sitting with the elbow flexed. (Page 16)" },
+                    { question: "For a Grade 4 or 5 supination test, resistance is applied to the posterior surface of the distal radius with counter pressure on the:", a: "Anterior radius", b: "Anterior ulna", c: "Posterior ulna", d: "Lateral epicondyle", correct: "b", explanation: "Counter pressure is placed on the anterior aspect of the ulna. (Page 17)" },
+                    { question: "The patient's position for a gravity-eliminated (Grade 2) supination test is:", a: "Sitting", b: "Supine with the shoulder abducted and elbow flexed to 90°", c: "Prone", d: "Standing", correct: "b", explanation: "The Grade 2 procedure positions the patient supine with the shoulder abducted and elbow flexed to 90°. (Page 18)" },
+                    { question: "The Supinator muscle can be palpated on the:", a: "Anterior forearm", b: "Medial forearm", c: "Posterior forearm distal to the head of the radius", d: "Directly over the biceps tendon", correct: "c", explanation: "Palpation occurs on the posterior forearm distal to the radial head. (Page 18)" },
+                    { question: "To isolate the Supinator from the Biceps during MMT, the test should be performed with the elbow in full:", a: "Flexion", b: "Extension", c: "Pronation", d: "Neutral", correct: "b", explanation: "Testing in elbow extension minimizes the biceps' supinating contribution. (Page 19)" },
+                    { question: "What are the two prime movers for forearm pronation?", a: "Pronator Teres and Flexor Carpi Radialis", b: "Pronator Teres and Pronator Quadratus", c: "Pronator Quadratus and Palmaris Longus", d: "Supinator and Pronator Teres", correct: "b", explanation: "Pronator Teres and Pronator Quadratus are listed as prime movers. (Page 20)" },
+                    { question: "What is the nerve supply for the Pronator Teres and Pronator Quadratus?", a: "Radial nerve", b: "Ulnar nerve", c: "Musculocutaneous nerve", d: "Median nerve", correct: "d", explanation: "Both pronator muscles are innervated by the median nerve. (Page 20)" },
+                    { question: "Besides pronation, what is an accessory function of the Pronator Teres?", a: "Elbow extension", b: "Supination", c: "Elbow flexion", d: "Wrist extension", correct: "c", explanation: "Pronator Teres assists with elbow flexion. (Page 20)" },
+                    { question: "The patient position for a Grade 3 test of the pronators is:", a: "Sitting", b: "Prone", c: "Supine", d: "Side-lying", correct: "a", explanation: "Against-gravity pronation is demonstrated in a sitting position. (Page 21)" },
+                    { question: "Resistance for a Grade 4 or 5 pronation test is applied on the:", a: "Posterior surface of the distal radius", b: "Anterior surface of the distal radius", c: "Medial surface of the ulna", d: "Lateral surface of the ulna", correct: "b", explanation: "Resistance is placed on the anterior distal radius. (Page 22)" },
+                    { question: "The gravity-eliminated position for testing the pronators is identical to the position for testing which other motion?", a: "Elbow flexion", b: "Elbow extension", c: "Supination", d: "Wrist flexion", correct: "c", explanation: "Both pronation and supination use the same gravity-eliminated setup. (Pages 18 & 23)" },
+                    { question: "The command \"Turn your palm up in direction of the ceiling\" is used to test for:", a: "Grade 3 Pronation", b: "Grade 2 Elbow Flexion", c: "Grade 3 Supination", d: "Grade 2 Elbow Extension", correct: "c", explanation: "That cue is used during the Grade 3 supination test. (Page 16)" },
+                    { question: "The command \"Straighten your elbow\" is used to test which muscle?", a: "Biceps Brachii", b: "Triceps Brachii", c: "Brachialis", d: "Supinator", correct: "b", explanation: "The triceps Grade 3 instructions direct the patient to straighten the elbow. (Page 12)" },
+                    { question: "The Pronator Quadratus is primarily responsible for:", a: "Powerful, rapid pronation", b: "Pronation combined with elbow flexion", c: "Initiating pronation and slow, unresisted pronation", d: "Accessory wrist flexion", correct: "c", explanation: "The notes show Pronator Teres acting during rapid or resisted tasks, leaving Pronator Quadratus to initiate and sustain routine pronation. (Page 20)" },
+                    { question: "Which elbow flexor is not affected by forearm position (pronation/supination)?", a: "Biceps Brachii", b: "Brachioradialis", c: "Pronator Teres", d: "Brachialis", correct: "d", explanation: "Brachialis attaches to the ulna, so its flexion role is unchanged by forearm rotation. (General anatomy note, Page 7)" }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            }
+        };
+
+        let activeQuizId = null;
+        const PAGE_TRANSITION_DURATION = 450;
+        const QUESTION_TIME_LIMIT = 60; 
+        const EXPLOSION_DURATION = 1200;
+
+        function applyStateDefaults(quizId, state) {
+            if (!quizData[quizId]) return state;
+            const defaults = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: quizData[quizId].originalQuestions.length,
+                incorrectQuestions: [],
+                completedPerfectly: false,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed',
+                questions: [...quizData[quizId].originalQuestions]
+            };
+            const merged = { ...defaults, ...state };
+            if (!Array.isArray(merged.questions) || merged.questions.length === 0) {
+                merged.questions = [...quizData[quizId].originalQuestions];
+            }
+            merged.timerIntervalId = null;
+            merged.questionStartTimestamp = null;
+            merged.keyboardIndex = null;
+            if (merged.practiceMode) merged.sessionMode = 'practice';
+            if (!merged.sessionMode) merged.sessionMode = merged.practiceMode ? 'practice' : 'timed';
+            return merged;
+        }
+
+        function recordTimeSpent(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+            if (!state.questionStartTimestamp) return;
+            const elapsed = Math.max(0, Math.round((Date.now() - state.questionStartTimestamp) / 1000));
+            state.elapsedSeconds = (state.elapsedSeconds || 0) + elapsed;
+            state.questionStartTimestamp = null;
+        }
+
+        function updateQuestionProgress(quizId) {
+            const progressEl = document.getElementById(`${quizId}-question-progress`);
+            const data = quizData[quizId];
+            if (!progressEl || !data || !data.state) return;
+            const total = data.questions ? data.questions.length : 0;
+            const currentIndex = data.state.currentQuestion;
+
+            if (!total || currentIndex >= total) {
+                progressEl.textContent = '';
+                progressEl.classList.remove('practice-mode');
+                return;
+            }
+
+            const parts = [`Question ${Math.min(currentIndex + 1, total)} of ${total}`];
+            if (data.state.practiceMode) parts.push('Practice mode');
+            progressEl.textContent = parts.join(' • ');
+            progressEl.classList.toggle('practice-mode', !!data.state.practiceMode);
+        }
+
+        function updatePracticeModeUI(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const practiceToggle = document.getElementById(`${quizId}-practice-toggle`);
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+
+            if (practiceToggle) practiceToggle.checked = !!data.state.practiceMode;
+            if (data.state.practiceMode) {
+                if (data.state.timerIntervalId) {
+                    clearInterval(data.state.timerIntervalId);
+                    data.state.timerIntervalId = null;
+                }
+                if (timerDisplay) timerDisplay.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+            } else {
+                if (timerDisplay) timerDisplay.textContent = data.state.timeRemaining ?? QUESTION_TIME_LIMIT;
+                if (timerUnit) timerUnit.style.display = '';
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+            }
+            updateQuestionProgress(quizId);
+        }
+
+        function togglePracticeMode(quizId, enabled) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            recordTimeSpent(quizId);
+            if (data.state.timerIntervalId) {
+                clearInterval(data.state.timerIntervalId);
+                data.state.timerIntervalId = null;
+            }
+            data.state.practiceMode = !!enabled;
+            data.state.timeRemaining = QUESTION_TIME_LIMIT;
+            data.state.sessionMode = data.state.practiceMode ? 'practice' : 'timed';
+            updatePracticeModeUI(quizId);
+            if (!data.state.practiceMode) {
+                startQuestionTimer(quizId);
+            }
+            const optionsContainer = getElement(quizId, 'options');
+            const hasActiveOptions = optionsContainer && Array.from(optionsContainer.querySelectorAll('button')).some(btn => !btn.disabled);
+            data.state.questionStartTimestamp = hasActiveOptions ? Date.now() : null;
+            saveQuizState(quizId);
+        }
+
+        function getQuizStats(quizId) {
+            const defaults = {
+                attempts: 0,
+                bestPercent: null,
+                bestScore: null,
+                bestTotal: null,
+                lastScore: null,
+                lastTotal: null,
+                lastPercent: null,
+                perfectRuns: 0,
+                totalTimeSeconds: 0,
+                practiceRuns: 0,
+                lastPlayedAt: null
+            };
+            try {
+                const raw = localStorage.getItem(`quizStats_${quizId}`);
+                if (!raw) return { ...defaults };
+                const parsed = JSON.parse(raw);
+                return { ...defaults, ...parsed };
+            } catch (e) {
+                console.warn('Failed to parse stats for', quizId, e);
+                return { ...defaults };
+            }
+        }
+
+        function saveQuizStats(quizId, stats) {
+            localStorage.setItem(`quizStats_${quizId}`, JSON.stringify(stats));
+        }
+
+        function formatScoreValue(score, total, percent) {
+            if (typeof score !== 'number' || typeof total !== 'number' || total === 0) return '—';
+            const percentText = typeof percent === 'number' ? `${percent.toFixed(1)}%` : `${((score / total) * 100).toFixed(1)}%`;
+            return `${score}/${total} (${percentText})`;
+        }
+
+        function formatDuration(totalSeconds) {
+            if (!totalSeconds || totalSeconds <= 0) return '—';
+            const seconds = Math.max(0, Math.round(totalSeconds));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) {
+                return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+            }
+            return `${minutes}m ${secs.toString().padStart(2, '0')}s`;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return null;
+            try {
+                const date = new Date(timestamp);
+                if (Number.isNaN(date.getTime())) return null;
+                return date.toLocaleString([], { hour12: true });
+            } catch (error) {
+                console.warn('Failed to format timestamp', error);
+                return null;
+            }
+        }
+
+        function updateQuizMetricsUI(quizId, stats = null) {
+            const quizStats = stats || getQuizStats(quizId);
+            const bestEl = document.getElementById(`${quizId}-best-score`);
+            const lastEl = document.getElementById(`${quizId}-last-score`);
+            const perfectEl = document.getElementById(`${quizId}-perfect-runs`);
+            const avgTimeEl = document.getElementById(`${quizId}-average-time`);
+            const lastPlayedEl = document.getElementById(`${quizId}-last-played`);
+
+            if (bestEl) bestEl.textContent = quizStats.bestScore != null && quizStats.bestTotal != null
+                ? formatScoreValue(quizStats.bestScore, quizStats.bestTotal, quizStats.bestPercent)
+                : '—';
+
+            if (lastEl) lastEl.textContent = quizStats.lastScore != null && quizStats.lastTotal != null
+                ? formatScoreValue(quizStats.lastScore, quizStats.lastTotal, quizStats.lastPercent)
+                : '—';
+
+            if (perfectEl) perfectEl.textContent = quizStats.perfectRuns || 0;
+
+            if (avgTimeEl) {
+                const averageSeconds = quizStats.attempts > 0 && quizStats.totalTimeSeconds
+                    ? quizStats.totalTimeSeconds / quizStats.attempts
+                    : 0;
+                avgTimeEl.textContent = formatDuration(averageSeconds);
+            }
+
+            if (lastPlayedEl) {
+                const formatted = formatTimestamp(quizStats.lastPlayedAt);
+                lastPlayedEl.textContent = formatted || '—';
+            }
+        }
+
+        function buildIncorrectReview(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !Array.isArray(data.state.incorrectQuestions) || data.state.incorrectQuestions.length === 0) {
+                return '';
+            }
+
+            const items = data.state.incorrectQuestions.map((item, index) => {
+                const correctAnswerText = item && item.correct && item[item.correct] ? item[item.correct] : 'Not available';
+                const questionLabel = item && item.question ? item.question : `Question ${index + 1}`;
+                return `
+                    <details>
+                        <summary>${questionLabel}</summary>
+                        <div class="review-body">
+                            <div><strong>Correct answer:</strong> ${correctAnswerText}</div>
+                            ${item && item.explanation ? `<div class="explanation">${item.explanation}</div>` : ''}
+                        </div>
+                    </details>
+                `;
+            }).join('');
+
+            return `
+                <div class="results-accordion">
+                    <h3>Review your tricky questions</h3>
+                    ${items}
+                </div>
+            `;
+        }
+
+        function setupOptionKeyboardNavigation(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(quizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length) {
+                data.state.keyboardIndex = null;
+                return;
+            }
+            buttons.forEach((btn, index) => {
+                btn.dataset.optionIndex = index.toString();
+            });
+            data.state.keyboardIndex = 0;
+            buttons[0].focus({ preventScroll: true });
+        }
+
+        function handleOptionNavigation(event) {
+            if (!activeQuizId) return;
+            const data = quizData[activeQuizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(activeQuizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length || buttons.every(btn => btn.disabled)) return;
+
+            const state = data.state;
+            if (typeof state.keyboardIndex !== 'number') state.keyboardIndex = 0;
+
+            const maxIndex = buttons.length - 1;
+            let handled = false;
+
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+                state.keyboardIndex = state.keyboardIndex >= maxIndex ? 0 : state.keyboardIndex + 1;
+                handled = true;
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+                state.keyboardIndex = state.keyboardIndex <= 0 ? maxIndex : state.keyboardIndex - 1;
+                handled = true;
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                const targetBtn = buttons[state.keyboardIndex];
+                if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                handled = true;
+            } else if (/^[1-9]$/.test(event.key)) {
+                const numericIndex = parseInt(event.key, 10) - 1;
+                if (numericIndex >= 0 && numericIndex <= maxIndex) {
+                    const targetBtn = buttons[numericIndex];
+                    if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                    state.keyboardIndex = numericIndex;
+                    handled = true;
+                }
+            }
+
+            if (handled) {
+                event.preventDefault();
+                const focusBtn = buttons[state.keyboardIndex];
+                if (focusBtn && !focusBtn.disabled) focusBtn.focus({ preventScroll: true });
+            }
+        }
+
+        function triggerScreenFlash() {
+            const flash = document.createElement('div');
+            flash.className = 'full-screen-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => {
+                flash.remove();
+            }, 400); // Match animation duration
+        }
+
+        function createExplosion(x, y, color = 'orange') {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) return;
+
+            overlay.style.display = 'block';
+
+            const particleCount = 40;
+            const angleIncrement = (2 * Math.PI) / particleCount;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'explosion-particle';
+                particle.style.backgroundColor = color;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                overlay.appendChild(particle);
+
+                const angle = i * angleIncrement;
+                const distance = 50 + Math.random() * 150;
+                const duration = 600 + Math.random() * 600;
+
+                const translateX = Math.cos(angle) * distance;
+                const translateY = Math.sin(angle) * distance;
+
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${translateX}px, ${translateY}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.1, 0.7, 0.5, 1)',
+                    fill: 'forwards'
+                });
+
+                setTimeout(() => {
+                    particle.remove();
+                }, duration);
+            }
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, EXPLOSION_DURATION);
+        }
+
+        // --- Helper to get elements by ID prefix ---
+        function getElement(quizId, elementSuffix) {
+            if (!quizId) return null;
+            return document.getElementById(`${quizId}-${elementSuffix}`);
+        }
+
+        // --- Page Transition Animation (Scale and Fade) ---
+        function animatePageTransition(element, direction, duration, callback) {
+            if (!element) { if (callback) callback(); return; }
+            if (element.animationFrameId) cancelAnimationFrame(element.animationFrameId);
+
+            let startTime = null;
+            const startOpacity = direction === 'in' ? 0 : 1;
+            const endOpacity = direction === 'in' ? 1 : 0;
+            const startScale = direction === 'in' ? 1.05 : 1;
+            const endScale = direction === 'in' ? 1 : 0.95;
+            const startBlur = direction === 'in' ? 5 : 0;
+            const endBlur = direction === 'in' ? 0 : 5;
+
+            if (direction === 'in') {
+                element.style.opacity = startOpacity;
+                element.style.transform = `scale(${startScale})`;
+                element.style.filter = `blur(${startBlur}px)`;
+                element.style.display = (element.id === 'celebration-page') ? 'flex' : 'block';
+            }
+
+            function animateFrame(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsedTime = timestamp - startTime;
+                const progress = Math.min(1, elapsedTime / duration);
+                const easedProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+
+                const currentOpacity = startOpacity + (endOpacity - startOpacity) * easedProgress;
+                const currentScale = startScale + (endScale - startScale) * easedProgress;
+                const currentBlur = startBlur + (endBlur - startBlur) * easedProgress;
+
+                element.style.opacity = currentOpacity;
+                element.style.transform = `scale(${currentScale})`;
+                element.style.filter = `blur(${currentBlur}px)`;
+
+                if (progress < 1) {
+                    element.animationFrameId = requestAnimationFrame(animateFrame);
+                } else {
+                    element.style.opacity = endOpacity;
+                    element.style.transform = `scale(${endScale})`;
+                    element.style.filter = `blur(${endBlur}px)`;
+                    element.animationFrameId = null;
+                    if (direction === 'out') {
+                        element.style.display = 'none';
+                        element.style.transform = 'scale(1)';
+                        element.style.filter = 'blur(0px)';
+                    }
+                    if (callback) callback();
+                }
+            }
+            element.animationFrameId = requestAnimationFrame(animateFrame);
+        }
+
+
+        // --- Navigation Functions ---
+        function transitionToPage(targetPageId) {
+            const allPages = document.querySelectorAll('.page-section');
+            let currentPage = null;
+            allPages.forEach(page => {
+                if (page.classList.contains('active-page')) {
+                    currentPage = page;
+                }
+            });
+
+            const targetPage = document.getElementById(targetPageId);
+            if (!targetPage) {
+                console.error(`Target page ${targetPageId} not found.`);
+                return;
+            }
+
+            if (currentPage && currentPage !== targetPage) {
+                currentPage.classList.remove('active-page');
+                currentPage.style.zIndex = 0;
+                animatePageTransition(currentPage, 'out', PAGE_TRANSITION_DURATION);
+            }
+
+            targetPage.style.position = 'absolute';
+            targetPage.style.zIndex = 1;
+            animatePageTransition(targetPage, 'in', PAGE_TRANSITION_DURATION, () => {
+                targetPage.classList.add('active-page');
+                targetPage.style.position = 'relative';
+                 // Re-render MathJax content if the target page is a quiz page
+                if (targetPageId.includes('-quiz-page') && typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise();
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+
+        function showQuizPage(quizId) {
+            activeQuizId = quizId;
+            if (!quizData[quizId] || !quizData[quizId].originalQuestions) {
+                console.error(`Quiz data missing for: ${quizId}`);
+                showHubPage();
+                return;
+            }
+            // Load state from localStorage
+            const savedState = loadQuizState(quizId);
+
+          if(savedState) {
+              const hydratedState = applyStateDefaults(quizId, savedState);
+              quizData[quizId].state = hydratedState;
+              quizData[quizId].questions = hydratedState.questions;
+          } else {
+              resetQuizState(quizId); // Fresh start
+              quizData[quizId].questions = [...quizData[quizId].originalQuestions];
+          }
+
+
+            const targetPageId = `${quizId}-quiz-page`;
+            const quizPage = document.getElementById(targetPageId);
+
+            if (quizPage) {
+                transitionToPage(targetPageId);
+                updatePracticeModeUI(quizId);
+                if (quizData[quizId].questions.length > 0) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const qContainer = getElement(quizId, 'question');
+                    if (qContainer) qContainer.textContent = "No questions loaded for this quiz yet.";
+                    const oContainer = getElement(quizId, 'options');
+                    if (oContainer) oContainer.innerHTML = '';
+                     const timerDisp = getElement(quizId, 'timer');
+                    if (timerDisp) timerDisp.textContent = QUESTION_TIME_LIMIT; 
+                    updateQuestionProgress(quizId);
+                }
+            } else {
+                console.error(`Quiz page element not found: ${targetPageId}`);
+                showHubPage();
+            }
+        }
+
+        function showHubPage() {
+            if (activeQuizId) {
+                recordTimeSpent(activeQuizId);
+                saveQuizState(activeQuizId); // Save progress when leaving a quiz
+                if(quizData[activeQuizId] && quizData[activeQuizId].state.timerIntervalId){
+                    clearInterval(quizData[activeQuizId].state.timerIntervalId);
+                    quizData[activeQuizId].state.timerIntervalId = null;
+                }
+            }
+            activeQuizId = null;
+            updateHubUI(); // Update the hub page buttons and checkmarks
+            transitionToPage('quiz-selection-page');
+        }
+
+        function showCelebrationPage() { // This is for the *overall* celebration
+            activeQuizId = null;
+            transitionToPage('celebration-page');
+            const celebrationPage = document.getElementById('celebration-page');
+            if (celebrationPage) startConfetti(celebrationPage); // Confetti from center for overall
+        }
+
+        // --- Quiz State Persistence ---
+        function saveQuizState(quizId) {
+            if (!quizData[quizId] || !quizData[quizId].state) return;
+            // Don't save state if quiz is completed
+             if (quizData[quizId].state.currentQuestion >= quizData[quizId].questions.length) {
+                localStorage.removeItem(`quizState_${quizId}`);
+                return;
+            }
+            const stateForStorage = {
+                ...quizData[quizId].state,
+                timerIntervalId: null,
+                questionStartTimestamp: null
+            };
+            localStorage.setItem(`quizState_${quizId}`, JSON.stringify(stateForStorage));
+        }
+
+        function loadQuizState(quizId) {
+            const savedStateJSON = localStorage.getItem(`quizState_${quizId}`);
+            if (savedStateJSON) {
+                return JSON.parse(savedStateJSON);
+            }
+            return null;
+        }
+
+        function retryWholeQuiz(quizId) {
+            localStorage.removeItem(`quizState_${quizId}`); // Clear saved progress
+            quizData[quizId].state.completedPerfectly = false; // Reset perfect status
+            localStorage.setItem(`quiz_${quizId}_completed`, 'false'); // Mark as not completed
+            resetQuizState(quizId);
+            showQuizPage(quizId);
+        }
+
+        // --- Quiz State Management ---
+        function resetQuizState(quizId) {
+            const data = quizData[quizId];
+            if (!data) { console.error(`Cannot reset state for non-existent quiz ID: ${quizId}`); return; }
+
+            if (!data.originalQuestions) data.originalQuestions = [];
+            data.questions = [...data.originalQuestions];
+
+            // Only load completion status from storage.
+            const wasOriginalQuizPerfected = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+            const mcqCount = data.originalQuestions.length;
+
+
+            if (data.state && data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: mcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: [...data.originalQuestions], // Start with full question set
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed'
+            };
+
+            data.questions = [...data.state.questions];
+
+            const progressBar = getElement(quizId, 'progress-bar');
+            if (progressBar) progressBar.style.width = '0%';
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+            if (timerDisplay) {
+                timerDisplay.textContent = QUESTION_TIME_LIMIT; 
+            }
+            if(timerContainer) {
+                 timerContainer.classList.remove('low-time');
+            }
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+        }
+
+
+        // --- Display Logic ---
+        function showQuizQuestion(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.questions || !data.state) { console.error(`Invalid data for quiz: ${quizId}`); showHubPage(); return; }
+
+            const state = data.state;
+            const questions = data.questions;
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            
+            // Update progress bar at the beginning of showing a question
+            const progressBar = getElement(quizId, 'progress-bar');
+            const totalQuestionsInCurrentAttempt = questions.length;
+            if(progressBar && totalQuestionsInCurrentAttempt > 0) {
+                 const progressPercentage = Math.min(100, ((state.currentQuestion) / totalQuestionsInCurrentAttempt) * 100);
+                 progressBar.style.width = `${progressPercentage}%`;
+            }
+
+
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) {
+                console.error(`UI elements missing for quiz: ${quizId}`); return;
+            }
+
+            const existingResults = questionContainer.querySelector('.results-buttons');
+            if (existingResults) questionContainer.innerHTML = '';
+
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.innerHTML = '';
+            nextButton.style.display = 'none';
+            optionsContainer.innerHTML = '';
+
+            state.questionStartTimestamp = Date.now();
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'visible';
+
+
+            if (state.currentQuestion < questions.length) {
+                const q = questions[state.currentQuestion];
+                if (!q || typeof q.question !== 'string') {
+                    console.error(`Invalid question data: ${quizId}, index ${state.currentQuestion}`, q);
+                    advanceQuestion(quizId, true);
+                    return;
+                }
+                questionContainer.innerHTML = `Q${state.currentQuestion + 1}: ${q.question}`;
+                
+                if (!q.a || !q.b || !q.c || !q.d) {
+                     console.error(`MCQ options missing or malformed: ${quizId}, index ${state.currentQuestion}`, q);
+                     advanceQuestion(quizId, true);
+                     return;
+                }
+                const options = [{key:'a', text:q.a}, {key:'b', text:q.b}, {key:'c', text:q.c}, {key:'d', text:q.d}];
+                if (q.e) options.push({key:'e', text:q.e});
+
+                const shuffledOptions = [...options];
+                shuffleArray(shuffledOptions);
+
+                shuffledOptions.forEach(optionObj => {
+                    const button = document.createElement('button');
+                    button.textContent = optionObj.text;
+                    button.dataset.key = optionObj.key;
+                    button.onclick = () => checkQuizAnswer(quizId, optionObj.key);
+                    optionsContainer.appendChild(button);
+                });
+                setupOptionKeyboardNavigation(quizId);
+                startQuestionTimer(quizId);
+                
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([questionContainer, optionsContainer]);
+                }
+
+            } else {
+                state.questionStartTimestamp = null;
+                updateQuestionProgress(quizId);
+                showQuizResults(quizId);
+            }
+        }
+
+        // --- Answer Checking & Advancement ---
+        function checkQuizAnswer(quizId, selectedKey) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            const questions = data.questions;
+            if (state.currentQuestion >= questions.length) { console.error("Invalid question index."); return; }
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const currentQData = questions[state.currentQuestion];
+            const correctKey = currentQData.correct;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            if (!optionsContainer || !feedbackContainer || !nextButton) return;
+
+            feedbackContainer.style.display = 'block';
+            feedbackContainer.innerHTML = ''; // Clear previous feedback
+
+            const isCorrect = selectedKey === correctKey;
+
+            if (isCorrect) {
+                state.score++;
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:bounceIn 0.7s;"><i class='fa-solid fa-face-laugh-beam' style='color:#10B981;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:bounceIn 0.7s;">Bravo! Good job!</div>
+                  <div class="explanation">${currentQData.explanation || 'Well done!'}</div>
+                `;
+                if (typeof confetti !== 'undefined') confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            } else {
+                feedbackContainer.className = 'feedback incorrect';
+                const correctAnswerText = currentQData[correctKey];
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-frown' style='color:#EF4444;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">Oh no! Try again!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                 if (data.questions.length === data.originalQuestions.length) {
+                    data.state.completedPerfectly = false; // If any answer is wrong in the main quiz, it's not perfect
+                    localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                }
+            }
+
+            optionsContainer.querySelectorAll('button').forEach(btn => {
+                btn.disabled = true;
+                const btnKey = btn.dataset.key;
+                if(btnKey === correctKey) {
+                    btn.style.background = 'rgba(34, 197, 94, 0.35)'; // Correct Green
+                    btn.style.borderColor = 'rgba(74, 222, 128, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-check' style='color:#10B981;'></i> ${btn.textContent.trim()}`;
+                } else if (btnKey === selectedKey) {
+                    btn.style.background = 'rgba(239, 68, 68, 0.35)'; // Incorrect Red
+                    btn.style.borderColor = 'rgba(252, 165, 165, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-xmark' style='color:#EF4444;'></i> ${btn.textContent.trim()}`;
+                }
+            });
+
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                MathJax.typesetPromise([feedbackContainer]);
+            }
+            saveQuizState(quizId); // Save state after an answer
+            nextButton.textContent = "Next Question";
+            nextButton.style.display = 'block';
+            nextButton.onclick = () => advanceQuestion(quizId, false);
+            // Add fun feedback animations (only once)
+            if (!document.getElementById('fun-feedback-animations')) {
+                const style = document.createElement('style');
+                style.id = 'fun-feedback-animations';
+                style.innerHTML = `
+                @keyframes bounceIn {
+                  0% { transform: scale(0.7); opacity: 0.5; }
+                  70% { transform: scale(1.15); opacity: 1; }
+                  100% { transform: scale(1); }
+                }
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  20%, 60% { transform: translateX(-10px); }
+                  40%, 80% { transform: translateX(10px); }
+                }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function handleNonMcqNextClick(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            if (state.currentQuestion >= data.questions.length) { console.error("Invalid index."); return; }
+
+            const q = data.questions[state.currentQuestion];
+            const nextButton = getElement(quizId, 'next-button');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            if (!nextButton || !feedbackContainer) return;
+
+            if (nextButton.textContent === "Show Answer") {
+                let answerPrefix = "Answer:";
+                if (q.type === "scientific_term") answerPrefix = "Scientific Term:";
+                else if (q.type === "enumerate") answerPrefix = "Enumeration:";
+                else if (q.type === "image_label") answerPrefix = "Labels / Answer:";
+
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `<div><strong>${answerPrefix}</strong></div><div class="explanation">${q.answer || 'No answer provided.'}</div>`;
+                feedbackContainer.style.display = 'block';
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                 saveQuizState(quizId); // Save state after showing answer
+                nextButton.textContent = "Next Question";
+            } else {
+                advanceQuestion(quizId, false);
+            }
+        }
+
+        function advanceQuestion(quizId, fromTimer = false) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const executeAdvance = () => {
+                state.currentQuestion++;
+                if (state.currentQuestion < data.questions.length) {
+                    state.timeRemaining = QUESTION_TIME_LIMIT;
+                }
+                saveQuizState(quizId); // Save state before showing next question
+
+                const questions = data.questions;
+                if (state.currentQuestion < questions.length) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const progressBar = getElement(quizId, 'progress-bar');
+                    if(progressBar) progressBar.style.width = '100%';
+                    showQuizResults(quizId);
+                }
+            };
+
+            if (fromTimer) {
+                playExplosionAnimation(executeAdvance);
+            } else {
+                const timerContainer = getElement(quizId, 'timer')?.closest('.timer-container');
+                if (timerContainer) timerContainer.classList.remove('low-time');
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+                executeAdvance();
+            }
+        }
+
+
+        // --- Timer and Explosion Functions ---
+        function startQuestionTimer(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplaySpan ? timerDisplaySpan.closest('.timer-container') : null;
+            if (timerContainer) {
+                timerContainer.parentElement && (timerContainer.parentElement.style.visibility = 'visible');
+            }
+
+            if (data.state.practiceMode) {
+                if (timerDisplaySpan) timerDisplaySpan.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+                data.state.timerIntervalId = null;
+                return;
+            }
+
+            const withinRange = typeof data.state.timeRemaining === 'number' && data.state.timeRemaining > 0 && data.state.timeRemaining <= QUESTION_TIME_LIMIT;
+            data.state.timeRemaining = withinRange ? data.state.timeRemaining : QUESTION_TIME_LIMIT;
+
+            if (timerDisplaySpan) {
+                timerDisplaySpan.textContent = data.state.timeRemaining;
+            }
+            if (timerUnit) timerUnit.style.display = '';
+            if (timerContainer) {
+                timerContainer.classList.remove('practice-mode');
+                timerContainer.classList.remove('low-time');
+            }
+
+
+            data.state.timerIntervalId = setInterval(() => {
+                data.state.timeRemaining--;
+                if (timerDisplaySpan) timerDisplaySpan.textContent = data.state.timeRemaining;
+
+                if (data.state.timeRemaining <= 10 && data.state.timeRemaining > 0) {
+                    if (timerContainer) timerContainer.classList.add('low-time');
+                }
+                if (data.state.timeRemaining <= 0) handleTimeUp(quizId);
+            }, 1000);
+        }
+
+        function handleTimeUp(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.practiceMode) return; // Timer shouldn't expire in practice mode
+
+            if (data.state.timerIntervalId) { clearInterval(data.state.timerIntervalId); data.state.timerIntervalId = null; }
+
+            recordTimeSpent(quizId);
+            data.state.questionStartTimestamp = null;
+
+            const optionsContainer = getElement(quizId, 'options');
+            if (optionsContainer) optionsContainer.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const currentQData = data.questions[data.state.currentQuestion];
+            if (feedbackContainer && currentQData) {
+                const correctAnswerText = currentQData[currentQData.correct] || "N/A";
+                feedbackContainer.className = 'feedback timeup';
+                let feedbackHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-surprise' style='color:#F59E0B;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">⏰ Time is up!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                feedbackContainer.innerHTML = feedbackHTML;
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                feedbackContainer.style.display = 'block';
+
+
+                if (currentQData.a && currentQData.correct) {
+                    data.state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                    if (data.questions.length === data.originalQuestions.length) {
+                         data.state.completedPerfectly = false;
+                         localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                    }
+                }
+            }
+            const nextButton = getElement(quizId, 'next-button');
+            if(nextButton) nextButton.style.display = 'none';
+
+            advanceQuestion(quizId, true);
+        }
+
+        function playExplosionAnimation(callback) {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) { if (callback) callback(); return; }
+
+            const activeQuizPage = document.querySelector('.page-section.active-page');
+            const quizContainer = activeQuizPage ? activeQuizPage.querySelector('.quiz-container') : null;
+            const originX = quizContainer ? quizContainer.offsetLeft + quizContainer.offsetWidth / 2 : window.innerWidth / 2;
+            const originY = quizContainer ? quizContainer.offsetTop + quizContainer.offsetHeight / 2 : window.innerHeight / 2;
+
+            overlay.innerHTML = '';
+            overlay.style.display = 'block';
+
+            const flash = document.createElement('div');
+            flash.classList.add('full-screen-flash');
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 400);
+
+            const numParticles = 35;
+            const colors = ['#FFD700', '#FFAB00', '#FF6F00', '#FF3D00', '#DD2C00', '#FFFFFF'];
+
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('explosion-particle');
+                particle.style.left = `${originX}px`;
+                particle.style.top = `${originY}px`;
+                const size = Math.random() * 40 + 15;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const points = [];
+                const numPoints = Math.floor(Math.random() * 4) + 5;
+                for(let j=0; j < numPoints; j++) {
+                    const angle = (j / numPoints) * 2 * Math.PI;
+                    const radiusVariation = Math.random() * 0.4 + 0.8;
+                    const x = 50 + Math.cos(angle) * 50 * radiusVariation;
+                    const y = 50 + Math.sin(angle) * 50 * radiusVariation;
+                    points.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+                }
+                particle.style.clipPath = `polygon(${points.join(', ')})`;
+                overlay.appendChild(particle);
+                const angle = Math.random() * 360;
+                const distance = Math.random() * (Math.max(window.innerWidth, window.innerHeight) * 0.7) + (Math.max(window.innerWidth, window.innerHeight) * 0.3);
+                const translateX = Math.cos(angle * Math.PI / 180) * distance;
+                const translateY = Math.sin(angle * Math.PI / 180) * distance;
+                const scaleFactor = Math.random() * 4 + 3;
+                const rotation = Math.random() * 720 - 360;
+                particle.animate([
+                    { transform: `translate(-50%, -50%) scale(0) rotate(0deg)`, opacity: 1, offset: 0 },
+                    { transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleFactor}) rotate(${rotation}deg)`, opacity: 1, offset: 0.7 },
+                    { transform: `translate(calc(-50% + ${translateX*1.2}px), calc(-50% + ${translateY*1.2}px)) scale(${scaleFactor*1.2}) rotate(${rotation + 90}deg)`, opacity: 0, offset: 1 }
+                ], { duration: EXPLOSION_DURATION - 200 + Math.random() * 400, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', fill: 'forwards' });
+            }
+            setTimeout(() => { overlay.style.display = 'none'; if (callback) callback(); }, EXPLOSION_DURATION);
+        }
+
+        // --- Results & Retry Logic ---
+        function showQuizResults(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const currentQuestions = data.questions;
+            const originalTotalMCQs = data.originalQuestions.length;
+            const mcqsInThisAttempt = currentQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            const timerDisplaySpan = getElement(quizId, 'timer');
+
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'hidden';
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) return;
+
+            optionsContainer.innerHTML = '';
+            feedbackContainer.style.display = 'none';
+            nextButton.style.display = 'none';
+            questionContainer.innerHTML = '';
+
+            const percentage = mcqsInThisAttempt > 0 ? ((state.score / mcqsInThisAttempt) * 100).toFixed(1) : 'N/A';
+            const scoreText = mcqsInThisAttempt > 0 ? `Score: ${state.score}/${mcqsInThisAttempt} (${percentage}%) on this attempt.` : 'Quiz complete (No MCQs in this set).';
+
+            const stats = getQuizStats(quizId);
+
+            const elapsedSeconds = state.elapsedSeconds || 0;
+            const attemptPercent = mcqsInThisAttempt > 0 ? (state.score / mcqsInThisAttempt) * 100 : null;
+
+            const updatedStats = {
+                ...stats,
+                attempts: stats.attempts + 1,
+                lastScore: mcqsInThisAttempt > 0 ? state.score : null,
+                lastTotal: mcqsInThisAttempt > 0 ? mcqsInThisAttempt : null,
+                lastPercent: attemptPercent,
+                totalTimeSeconds: stats.totalTimeSeconds + elapsedSeconds,
+                lastPlayedAt: Date.now(),
+                practiceRuns: stats.practiceRuns + (state.sessionMode === 'practice' ? 1 : 0)
+            };
+
+            const bestPercent = (mcqsInThisAttempt > 0) ? (state.score / mcqsInThisAttempt) * 100 : null;
+            if (bestPercent != null && (stats.bestPercent == null || bestPercent > stats.bestPercent)) {
+                updatedStats.bestPercent = bestPercent;
+                updatedStats.bestScore = state.score;
+                updatedStats.bestTotal = mcqsInThisAttempt;
+            }
+
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                updatedStats.perfectRuns = stats.perfectRuns + 1;
+            }
+
+            saveQuizStats(quizId, updatedStats);
+            updateQuizMetricsUI(quizId, updatedStats);
+            state.elapsedSeconds = 0;
+
+            const isFullOriginalAttempt = currentQuestions.length === originalTotalMCQs && originalTotalMCQs > 0;
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                 if (data.state) data.state.completedPerfectly = true;
+                 localStorage.setItem(`quiz_${quizId}_completed`, 'true');
+            }
+
+            const attemptMeta = [];
+            if (elapsedSeconds > 0) attemptMeta.push(`<strong>Time spent:</strong> ${formatDuration(elapsedSeconds)}`);
+            attemptMeta.push(`<strong>Mode:</strong> ${state.sessionMode === 'practice' ? 'Practice' : 'Timed'}`);
+            if (updatedStats.attempts > 1 && updatedStats.bestPercent != null) {
+                attemptMeta.push(`<strong>Best run:</strong> ${formatScoreValue(updatedStats.bestScore, updatedStats.bestTotal, updatedStats.bestPercent)}`);
+            }
+            const resultsMetaHtml = attemptMeta.length ? `<div class="results-meta">${attemptMeta.join(' • ')}</div>` : '';
+
+            const reviewHtml = buildIncorrectReview(quizId);
+
+            let buttonsHTML = '<div class="results-buttons">';
+            const currentAttemptWasPerfect = mcqsInThisAttempt > 0 && state.score === mcqsInThisAttempt && state.incorrectQuestions.length === 0;
+            if (currentAttemptWasPerfect) {
+                buttonsHTML += `<button class="celebrate-button" onclick="startConfetti(this)">Celebrate This Round!</button>`;
+            }
+
+            const incorrectToRetry = state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+            if (incorrectToRetry.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryIncorrectQuiz('${quizId}')">Retry Incorrect (${incorrectToRetry.length})</button>`;
+            }
+            if (data.originalQuestions && data.originalQuestions.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryWholeQuiz('${quizId}')">Retry Full Quiz</button>`;
+            }
+
+            buttonsHTML += `<button class="back-button" onclick="showHubPage()">Back to Hub</button></div>`;
+            questionContainer.innerHTML = `<div style="text-align:center;"><h2 style="font-size:1.5em;margin-bottom:15px;">Quiz Completed!</h2><p class="results-text">${scoreText}</p>${resultsMetaHtml}${buttonsHTML}${reviewHtml}</div>`;
+             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset results page
+                MathJax.typesetPromise([questionContainer]);
+            }
+            localStorage.removeItem(`quizState_${quizId}`); // Clear progress on completion
+            checkOverallCompletion();
+        }
+
+       function retryIncorrectQuiz(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.state.incorrectQuestions) {
+                alert("Nothing to retry or data error!");
+                return;
+            }
+
+            const incorrectMCQsToRetry = data.state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+
+            if (incorrectMCQsToRetry.length === 0) {
+                alert("No incorrect MCQs to retry from the last attempt.");
+                return;
+            }
+
+            const wasOriginalQuizPerfected = data.state.completedPerfectly;
+            const originalMcqCount = data.state.mcqCount;
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: originalMcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: JSON.parse(JSON.stringify(incorrectMCQsToRetry)),
+                practiceMode: data.state.practiceMode,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: data.state.practiceMode ? 'practice' : 'timed'
+            };
+            
+            saveQuizState(quizId); // Save the new "retry" state
+            showQuizPage(quizId); // Start the quiz with the incorrect questions
+        }
+        
+        // --- NEW: Update Hub UI based on saved states ---
+        function updateHubUI() {
+            for (const quizId in quizData) {
+                const card = document.getElementById(`${quizId}-card`);
+                if (!card) continue;
+                
+                const startButton = card.querySelector('.quiz-button');
+                const retryButton = card.querySelector('.retry-quiz-button');
+                const checkmark = card.querySelector('.completion-checkmark');
+
+                const savedState = loadQuizState(quizId);
+                const isCompleted = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+                if (isCompleted) {
+                    checkmark.classList.add('visible');
+                    startButton.textContent = 'Retake Quiz';
+                    startButton.style.display = 'block';
+                    retryButton.style.display = 'none';
+                } else if (savedState && savedState.currentQuestion > 0) {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = `Continue Quiz (Q${savedState.currentQuestion + 1})`;
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'block';
+                } else {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = 'Start Quiz';
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'none';
+                }
+
+                updateQuizMetricsUI(quizId);
+            }
+        }
+
+
+        // --- Overall Completion & Confetti ---
+        function checkOverallCompletion() {
+            let allQuizzesPerfected = true;
+            let atLeastOneQuizWithMcqsExists = false;
+
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                const originalMcqsInThisQuiz = quiz.originalQuestions ? quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length : 0;
+
+                if (originalMcqsInThisQuiz > 0) {
+                    atLeastOneQuizWithMcqsExists = true;
+                    // Check local storage directly for completion status
+                    if (localStorage.getItem(`quiz_${quizId}_completed`) !== 'true') {
+                        allQuizzesPerfected = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allQuizzesPerfected && atLeastOneQuizWithMcqsExists) {
+                setTimeout(showCelebrationPage, 1500);
+            }
+        }
+
+        function startConfetti(buttonElement = null) {
+            if (typeof confetti !== 'function') { console.error("Confetti lib not loaded."); return; }
+            let confettiOrigin = { y: 0.6 };
+            if (buttonElement && typeof buttonElement.getBoundingClientRect === 'function') {
+                try {
+                    const rect = buttonElement.getBoundingClientRect();
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    confettiOrigin = {
+                        x: Math.max(0, Math.min(1, (rect.left + rect.width / 2) / vw)),
+                        y: Math.max(0, Math.min(1, (rect.top + rect.height / 2) / vh))
+                    };
+                } catch (e) { console.error("Error calculating confetti origin:", e); }
+            } else if (buttonElement && buttonElement.id === 'celebration-page') {
+                confettiOrigin = { x: 0.5, y: 0.1 };
+            }
+
+            const newConfettiColors = [
+                '#8B0000', '#DC143C', '#00008B', '#4169E1', '#800080', '#9370DB',
+                '#FF00FF', '#C71585', '#FFD700', '#DAA520', '#008080', '#20B2AA',
+                '#00CED1', '#48D1CC', '#FFC0CB', '#FFFFFF'
+            ];
+
+
+            const confettiSettings = {
+                particleCount: 250,
+                spread: 120,
+                origin: confettiOrigin,
+                colors: newConfettiColors,
+                scalar: 1.1,
+                drift: 0.5
+            };
+
+            if (buttonElement && buttonElement.id === 'celebration-page') {
+                confetti(confettiSettings);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.2, y:0.15}, spread: 80, particleCount: 100}), 300);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.8, y:0.15}, spread: 80, particleCount: 100}), 600);
+            } else {
+                confetti(confettiSettings);
+            }
+        }
+
+
+        // --- Initialization ---
+        function initializeQuizData() {
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                if (!quiz.originalQuestions) quiz.originalQuestions = [];
+                const mcqCount = quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+                // Set initial state structure, but don't overwrite if loaded from storage later
+                const initialState = {
+                    currentQuestion: 0,
+                    score: 0,
+                    mcqCount: mcqCount,
+                    incorrectQuestions: [],
+                    timerIntervalId: null,
+                    timeRemaining: QUESTION_TIME_LIMIT,
+                    completedPerfectly: localStorage.getItem(`quiz_${quizId}_completed`) === 'true',
+                    questions: [...quiz.originalQuestions]
+                };
+
+                quiz.state = initialState;
+
+                const timerDisplay = document.getElementById(`${quizId}-timer`);
+                if (timerDisplay) {
+                    timerDisplay.textContent = QUESTION_TIME_LIMIT;
+                }
+            }
+
+            updateHubUI(); // Update UI on first load
+
+            const hubPage = document.getElementById('quiz-selection-page');
+            if (hubPage) {
+                hubPage.style.display='block';
+                hubPage.style.opacity='1';
+                hubPage.classList.add('active-page');
+                hubPage.style.position='relative';
+                hubPage.style.zIndex=1;
+                hubPage.style.transform = 'scale(1)';
+                hubPage.style.filter = 'blur(0px)';
+            }
+            document.querySelectorAll('.page-section').forEach(page => {
+                if(page.id !== 'quiz-selection-page') {
+                    page.style.display='none';
+                    page.style.opacity='0';
+                    page.style.position='absolute';
+                    page.classList.remove('active-page');
+                    page.style.transform='scale(1)';
+                    page.style.filter = 'blur(0px)';
+                }
+            });
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+        document.addEventListener('keydown', handleOptionNavigation);
+        document.addEventListener('DOMContentLoaded', initializeQuizData);
+    </script>
+</body>
+</html>
