@@ -1,0 +1,2719 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrotherapy Quiz Hub</title>
+    <meta name="description" content="Practice and test your knowledge with the Hydrotherapy Quiz Hub.">
+    <meta property="og:title" content="Hydrotherapy Quiz Hub">
+    <meta property="og:site_name" content="Hydrotherapy Quiz Hub">
+    <meta name="twitter:title" content="Hydrotherapy Quiz Hub">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+        <!-- Hydrotherapy favicon (SVG droplet emoji) -->
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E">
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        :root {
+            --layout-max-width: min(1100px, 92vw);
+            --page-padding: clamp(1rem, 4vw, 2.75rem);
+            --card-radius: 20px;
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        @media (max-width: 640px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.85rem, 5vw, 1.9rem);
+                --card-radius: 18px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            :root {
+                --page-padding: clamp(0.7rem, 6vw, 1.4rem);
+                --card-radius: 16px;
+            }
+        }
+        /* Keyframes for the hover animation */
+        @keyframes splash-animation {
+          0% {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0.5;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(3.5);
+            opacity: 0;
+          }
+        }
+
+        /* --- BASE DARK THEME STYLES --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-color: #111827; /* Dark Blue/Gray Base */
+            color: #D1D5DB; /* Light Gray Text */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            position: relative; /* Needed for absolutely positioned children */
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        /* --- Page Section Base Styles --- */
+        .page-section {
+            display: none; /* Initially hidden, JS controls display */
+            opacity: 0; /* Start fully transparent */
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            padding: var(--page-padding) clamp(0.75rem, 4vw, 3rem) calc(var(--page-padding) + 1.5rem);
+            position: absolute; /* Position absolutely for overlap during transition */
+            top: 0;
+            left: 0;
+            will-change: opacity, transform, filter; /* Hint for browser optimization, added filter */
+            background-color: inherit; /* Inherit body background or set specific page background */
+            transform: scale(1); /* Base transform state */
+        }
+        .page-section.active-page {
+             position: relative; /* Take up space in the document flow when active */
+             z-index: 1; /* Ensure active page is on top */
+        }
+
+        /* Common Quiz Page Structure Styles */
+        .page-section .header {
+            color: white;
+            --header-inline-padding: clamp(1rem, 4vw, 2.25rem);
+            padding: clamp(1rem, 3vw, 1.75rem) var(--header-inline-padding);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin: 0 auto clamp(0.75rem, 2vw, 1.5rem);
+            position: relative; /* Needed for timer positioning */
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, var(--layout-max-width));
+            border-radius: var(--card-radius);
+        }
+        .page-section .header h1 {
+            margin-bottom: 15px; /* Space for timer */
+            font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+            margin: 0;
+            flex: 1 1 100%;
+            text-align: center;
+        }
+
+        .page-section .header-top {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: clamp(0.75rem, 2vw, 1.25rem);
+            width: 100%;
+        }
+
+        .page-section .header-controls {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.65rem, 2vw, 1.25rem);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-container {
+            font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+            font-weight: 500;
+            color: #ffffff;
+            background-color: rgba(0,0,0,0.32);
+            padding: 6px 12px;
+            border-radius: 10px;
+            transition: color 0.3s, transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .timer-display {
+            font-weight: 700;
+        }
+
+        .timer-label {
+            font-weight: 500;
+        }
+
+        .timer-unit {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .timer-container.practice-mode {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+        }
+
+        .timer-container.low-time {
+            color: #EF4444; /* Red text for low time */
+            animation: pulseLowTime 0.8s infinite alternate;
+        }
+
+        @keyframes pulseLowTime {
+            from {
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0);
+            }
+            to {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+            }
+        }
+
+        .mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.95em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .mode-toggle input {
+            appearance: none;
+            width: 36px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.45);
+            position: relative;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .mode-toggle input::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            transition: transform 0.3s ease;
+        }
+
+        .mode-toggle input:checked {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.6), rgba(5, 150, 105, 0.6));
+        }
+
+        .mode-toggle input:checked::after {
+            transform: translateX(18px);
+        }
+
+        .mode-toggle span.toggle-label {
+            font-weight: 500;
+            color: #d1fae5;
+        }
+
+        .question-progress {
+            font-size: 0.95em;
+            color: #9CA3AF;
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: 0.01em;
+        }
+
+        .question-progress.practice-mode {
+            color: #6ee7b7;
+        }
+
+        .quiz-card .quiz-metrics {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            text-align: left;
+            font-size: 0.95rem;
+            display: grid;
+            gap: 0.6rem;
+        }
+
+        .quiz-card .quiz-metrics h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .quiz-card .metric-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            color: #cbd5f5;
+        }
+
+        .quiz-card .metric-row span.value {
+            font-weight: 600;
+            color: #fbbf24;
+        }
+
+        .quiz-card .metric-row span.label {
+            color: #9ca3af;
+        }
+
+        .results-meta {
+            font-size: 0.95em;
+            color: #9ca3af;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .results-meta strong {
+            color: #f3f4f6;
+        }
+
+        .results-accordion {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .results-accordion h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: #f3f4f6;
+        }
+
+        .results-accordion details {
+            background: rgba(17, 24, 39, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .results-accordion summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #e0f2fe;
+            list-style: none;
+        }
+
+        .results-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .results-accordion details[open] {
+            border-color: rgba(59, 130, 246, 0.35);
+            background: rgba(30, 58, 138, 0.4);
+        }
+
+        .results-accordion .review-body {
+            margin-top: 0.75rem;
+            color: #cbd5f5;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .results-accordion .review-body strong {
+            color: #fde68a;
+        }
+
+        .results-accordion .explanation {
+            margin-top: 0.75rem;
+        }
+
+
+        #explosion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: none;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .explosion-particle {
+            position: absolute;
+            transform-origin: center center;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 1;
+            pointer-events: none;
+        }
+        .full-screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            z-index: 10001;
+            pointer-events: none;
+            animation: screenFlash 0.4s ease-out forwards;
+        }
+        @keyframes screenFlash {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .page-section .progress-bar-container {
+            padding: 3px;
+            border-radius: 10px;
+            margin: 0 auto 10px;
+            background-color: rgba(255, 255, 255, 0.12);
+            width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+            margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+            max-width: none;
+        }
+        .page-section .progress-bar {
+            height: 10px;
+            border-radius: 6px;
+            transition: width 0.4s ease-in-out;
+            width: 0%;
+            background: linear-gradient(90deg, #ffffff, #6366f1); /* Default color */
+        }
+        .page-section .quiz-container {
+            width: min(100%, var(--layout-max-width));
+            max-width: 840px;
+            margin: clamp(1.5rem, 4vw, 2.75rem) auto;
+            padding: clamp(1.5rem, 4vw, 2.5rem);
+            background: #1F2937; /* Default container background for hub */
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            color: #E5E7EB;
+            position: relative;
+            display: grid;
+            gap: clamp(1rem, 2.5vw, 1.75rem);
+        }
+
+        .page-section .options {
+            display: grid;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, 680px);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .page-section .options {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+        }
+        .page-section .question {
+            font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+            margin: 0 auto 25px;
+            min-height: 50px;
+            text-align: center;
+            font-weight: 500;
+            color: #ffffff;
+            width: min(100%, 680px);
+        }
+        .page-section .results-text {
+            font-size: clamp(1rem, 2.2vw, 1.2rem);
+            margin-bottom: 25px;
+            color: #E5E7EB;
+        }
+        .page-section .results-buttons {
+             text-align: center;
+             margin-top: 20px;
+        }
+
+        .page-section .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            color: white;
+            text-align: center;
+            font-size: 0.95em;
+        }
+        .page-section .feedback.correct {
+            background: linear-gradient(135deg, #10B981, #059669); /* Emerald Green */
+        }
+        .page-section .feedback.incorrect {
+            background: linear-gradient(135deg, #EF4444, #DC2626); /* Red */
+        }
+        .page-section .feedback.timeup {
+            background: linear-gradient(135deg, #F59E0B, #D97706); /* Amber */
+        }
+
+        .page-section .links {
+            text-align: center;
+            margin: 30px auto 20px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            width: min(100%, var(--layout-max-width));
+        }
+        .page-section .links a {
+            color: #9CA3AF; /* Default link color */
+            text-decoration: none;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+         .page-section .links a:hover {
+             color: #E5E7EB; /* Default link hover color */
+         }
+         .page-section .links a i {
+             font-size: 1.3em;
+         }
+
+        /* --- Hub/Selection Page Styles --- */
+       #quiz-selection-page {
+           background: #111827; /* Main hub background */
+           color: #D1D5DB;
+           padding: var(--page-padding);
+           padding-bottom: calc(var(--page-padding) + 1.5rem);
+       }
+        #quiz-selection-page .hub-header {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            padding: clamp(1.5rem, 3vw, 2.4rem);
+            border-radius: var(--card-radius);
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(14, 165, 233, 0.35);
+            margin: 0 auto clamp(1.5rem, 4vw, 3rem);
+            width: min(100%, var(--layout-max-width));
+            transition: transform 0.3s ease;
+            color: white;
+        }
+        #quiz-selection-page .hub-header:hover { transform: translateY(-5px); }
+    #quiz-selection-page .hub-header h1 { margin: 0; font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 700; }
+        /* Hub logo + title row */
+        #quiz-selection-page .hub-header .hub-title-row { display: inline-flex; align-items: center; gap: 12px; }
+        #quiz-selection-page .hub-header .hub-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: radial-gradient(100% 100% at 30% 30%, rgba(255,255,255,0.5) 0%, rgba(56,189,248,0.9) 40%, rgba(37,99,235,0.9) 100%);
+            border: 1px solid rgba(255,255,255,0.35);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35), inset 0 1px 6px rgba(255,255,255,0.35);
+        }
+        #quiz-selection-page .hub-header .hub-logo i { color: #ffffff; font-size: 1.25rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
+        #quiz-selection-page .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(1.35rem, 3vw, 2.5rem);
+            width: min(100%, var(--layout-max-width));
+            margin: 0 auto;
+        }
+
+        #quiz-selection-page .quiz-card {
+            background: rgba(55, 65, 81, 0.35); /* Glassy background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* Safari support */
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: clamp(1.25rem, 3vw, 2rem);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* For positioning the animation */
+            overflow: hidden; /* To contain the animation */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.85rem, 2vw, 1.25rem);
+        }
+
+        #quiz-selection-page .quiz-card > * {
+            position: relative;
+            z-index: 2; /* Ensure card content is above the animation */
+        }
+
+        #quiz-selection-page .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none; /* Let clicks pass through */
+            z-index: 1;
+        }
+
+        #quiz-selection-page .quiz-card:hover::before {
+            animation: splash-animation 0.7s ease-out;
+        }
+
+        #quiz-selection-page .quiz-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.25);
+        }
+        #quiz-selection-page .quiz-card h2 {
+            font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+            font-weight: 500;
+        }
+        #quiz-selection-page .quiz-card h2::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #0ea5e9, #2563eb);
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- NEW: Generic Glass Button Style --- */
+        .quiz-button,
+        .retry-quiz-button,
+        .page-section .options button,
+        .page-section .next-button,
+        .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: #E5E7EB;
+
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+
+            padding: 1rem;
+            margin: 8px 0;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+        }
+
+        .retry-quiz-button {
+             margin-top: 10px;
+             background-color: rgba(245, 158, 11, 0.2); /* Amber tint */
+             border-color: rgba(252, 211, 77, 0.4);
+        }
+        
+        .completion-checkmark {
+            color: #34D399; /* Emerald Green */
+            font-size: 1.5rem;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-in-out;
+            z-index: 3; /* Ensure it's on top */
+        }
+
+        .completion-checkmark.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* Previous Button Styling for centering */
+        .page-section .prev-button {
+            width: auto;
+            display: inline-block;
+            margin: 5px auto;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            opacity: 0.9;
+            border-radius: 50px;
+        }
+         .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+             display: inline-block;
+             width: auto;
+             margin: 10px;
+             padding: 12px 25px;
+             border-radius: 50px;
+             font-size: 0.95rem;
+        }
+
+        .quiz-button > *,
+        .retry-quiz-button > *,
+        .page-section .options button > *,
+        .page-section .next-button > *,
+        .page-section .retry-button > *,
+        .page-section .back-button > *,
+        .page-section .celebrate-button > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .quiz-button::before,
+        .retry-quiz-button::before,
+        .page-section .options button::before,
+        .page-section .next-button::before,
+        .page-section .retry-button::before,
+        .page-section .back-button::before,
+        .page-section .celebrate-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .quiz-button:hover::before,
+        .retry-quiz-button:hover::before,
+        .page-section .options button:hover:not(:disabled)::before,
+        .page-section .next-button:hover::before,
+        .page-section .retry-button:hover::before,
+        .page-section .back-button:hover::before,
+        .page-section .celebrate-button:hover::before {
+            animation: splash-animation 0.6s ease-out;
+        }
+
+        .quiz-button:hover,
+        .retry-quiz-button:hover,
+        .page-section .options button:hover:not(:disabled),
+        .page-section .next-button:hover,
+        .page-section .retry-button:hover,
+        .page-section .back-button:hover,
+        .page-section .celebrate-button:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .page-section .options button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .page-section .options button:disabled {
+            opacity: 0.8;
+            cursor: default;
+        }
+
+    /* --- THEMED BUTTONS --- */
+    #quiz-selection-page .lecture-1-button  { background: linear-gradient(145deg, rgba(14, 165, 233, 0.45), rgba(37, 99, 235, 0.6)); }
+       
+        .explanation {
+             font-size: 0.9em;
+             margin-top: 10px;
+             padding: 8px;
+             background-color: rgba(255, 255, 255, 0.05);
+             border-radius: 5px;
+             line-height: 1.4;
+             text-align: left;
+             color: #D1D5DB;
+        }
+        .explanation strong { color: #ffffff; }
+
+        /* --- QUIZ SPECIFIC COLOR OVERRIDES --- */
+    #lecture-1-card { background: rgba(20, 184, 166, 0.35); box-shadow: 0 8px 25px rgba(20, 184, 166, 0.25); }
+    #lecture-1-card .quiz-button { background: linear-gradient(145deg, rgba(45, 212, 191, 0.7), rgba(20, 184, 166, 0.7)); border-color: rgba(153, 246, 228, 0.55); }
+    #lecture-1-card .retry-quiz-button { background: rgba(45, 212, 191, 0.2); border-color: rgba(153, 246, 228, 0.45); }
+    #lecture-1-quiz-page { background-color: #115E59; }
+    #lecture-1-quiz-page .header { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+    #lecture-1-quiz-page .progress-bar { background: linear-gradient(90deg, #99F6E4, #0D9488); }
+    #lecture-1-quiz-page .links a { color: #CCFBF1; }
+    #lecture-1-quiz-page .links a:hover { color: #F0FDFA; }
+    #lecture-1-quiz-page .quiz-button,
+    #lecture-1-quiz-page .options button,
+    #lecture-1-quiz-page .next-button,
+    #lecture-1-quiz-page .retry-button,
+    #lecture-1-quiz-page .celebrate-button,
+    #lecture-1-quiz-page .back-button { background: rgba(13, 148, 136, 0.25); border-color: rgba(153, 246, 228, 0.35); }
+
+    #lecture-2-card { background: rgba(236, 72, 153, 0.35); box-shadow: 0 8px 25px rgba(236, 72, 153, 0.25); }
+    #lecture-2-card .quiz-button { background: linear-gradient(145deg, rgba(244, 114, 182, 0.7), rgba(236, 72, 153, 0.7)); border-color: rgba(251, 207, 232, 0.55); }
+    #lecture-2-card .retry-quiz-button { background: rgba(244, 114, 182, 0.2); border-color: rgba(251, 207, 232, 0.45); }
+    #lecture-2-quiz-page { background-color: #831843; }
+    #lecture-2-quiz-page .header { background: linear-gradient(135deg, #EC4899, #DB2777); }
+    #lecture-2-quiz-page .progress-bar { background: linear-gradient(90deg, #FBCFE8, #DB2777); }
+    #lecture-2-quiz-page .links a { color: #FCE7F3; }
+    #lecture-2-quiz-page .links a:hover { color: #FDF2F8; }
+    #lecture-2-quiz-page .quiz-button,
+    #lecture-2-quiz-page .options button,
+    #lecture-2-quiz-page .next-button,
+    #lecture-2-quiz-page .retry-button,
+    #lecture-2-quiz-page .celebrate-button,
+    #lecture-2-quiz-page .back-button { background: rgba(219, 39, 119, 0.25); border-color: rgba(251, 207, 232, 0.35); }
+
+    #lecture-3-card { background: rgba(249, 115, 22, 0.35); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.25); }
+    #lecture-3-card .quiz-button { background: linear-gradient(145deg, rgba(251, 146, 60, 0.7), rgba(249, 115, 22, 0.7)); border-color: rgba(254, 215, 170, 0.55); }
+    #lecture-3-card .retry-quiz-button { background: rgba(251, 146, 60, 0.2); border-color: rgba(254, 215, 170, 0.45); }
+    #lecture-3-quiz-page { background-color: #7C2D12; }
+    #lecture-3-quiz-page .header { background: linear-gradient(135deg, #F97316, #EA580C); }
+    #lecture-3-quiz-page .progress-bar { background: linear-gradient(90deg, #FED7AA, #EA580C); }
+    #lecture-3-quiz-page .links a { color: #FFEDD5; }
+    #lecture-3-quiz-page .links a:hover { color: #FFF7ED; }
+    #lecture-3-quiz-page .quiz-button,
+    #lecture-3-quiz-page .options button,
+    #lecture-3-quiz-page .next-button,
+    #lecture-3-quiz-page .retry-button,
+    #lecture-3-quiz-page .celebrate-button,
+    #lecture-3-quiz-page .back-button { background: rgba(234, 88, 12, 0.25); border-color: rgba(254, 215, 170, 0.35); }
+
+    #lecture-4-card { background: rgba(59, 130, 246, 0.35); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25); }
+    #lecture-4-card .quiz-button { background: linear-gradient(145deg, rgba(96, 165, 250, 0.7), rgba(59, 130, 246, 0.7)); border-color: rgba(191, 219, 254, 0.55); }
+    #lecture-4-card .retry-quiz-button { background: rgba(96, 165, 250, 0.2); border-color: rgba(191, 219, 254, 0.45); }
+    #lecture-4-quiz-page { background-color: #1E3A8A; }
+    #lecture-4-quiz-page .header { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+    #lecture-4-quiz-page .progress-bar { background: linear-gradient(90deg, #BFDBFE, #2563EB); }
+    #lecture-4-quiz-page .links a { color: #DBEAFE; }
+    #lecture-4-quiz-page .links a:hover { color: #EFF6FF; }
+    #lecture-4-quiz-page .quiz-button,
+    #lecture-4-quiz-page .options button,
+    #lecture-4-quiz-page .next-button,
+    #lecture-4-quiz-page .retry-button,
+    #lecture-4-quiz-page .celebrate-button,
+    #lecture-4-quiz-page .back-button { background: rgba(37, 99, 235, 0.25); border-color: rgba(191, 219, 254, 0.35); }
+
+    #lecture-5-card { background: rgba(234, 179, 8, 0.35); box-shadow: 0 8px 25px rgba(234, 179, 8, 0.25); }
+    #lecture-5-card .quiz-button { background: linear-gradient(145deg, rgba(250, 204, 21, 0.7), rgba(234, 179, 8, 0.7)); border-color: rgba(254, 240, 138, 0.55); }
+    #lecture-5-card .retry-quiz-button { background: rgba(250, 204, 21, 0.2); border-color: rgba(254, 240, 138, 0.45); }
+    #lecture-5-quiz-page { background-color: #713F12; }
+    #lecture-5-quiz-page .header { background: linear-gradient(135deg, #EAB308, #CA8A04); }
+    #lecture-5-quiz-page .progress-bar { background: linear-gradient(90deg, #FEF08A, #CA8A04); }
+    #lecture-5-quiz-page .links a { color: #FEF9C3; }
+    #lecture-5-quiz-page .links a:hover { color: #FEFCE8; }
+    #lecture-5-quiz-page .quiz-button,
+    #lecture-5-quiz-page .options button,
+    #lecture-5-quiz-page .next-button,
+    #lecture-5-quiz-page .retry-button,
+    #lecture-5-quiz-page .celebrate-button,
+    #lecture-5-quiz-page .back-button { background: rgba(202, 138, 4, 0.25); border-color: rgba(254, 240, 138, 0.35); }
+
+        /* --- Styles for Celebration Page --- */
+        #celebration-page {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1F2937, #111827);
+            color: #f7fafc;
+            text-align: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(2.5rem, 6vw, 4rem);
+            overflow: hidden;
+            gap: clamp(1.5rem, 4vw, 2.5rem);
+        }
+         #celebration-page h1 {
+             font-size: clamp(2.4rem, 5vw, 3.5rem);
+             font-weight: 700;
+             margin-bottom: 0;
+             color: #34D399;
+             text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+         }
+         #celebration-page p {
+             font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+             margin-bottom: 0;
+             color: #E5E7EB;
+         }
+         #celebration-page .back-button {
+             padding: 14px 35px;
+             border-radius: 50px;
+             font-size: 1.2em;
+             margin: 0;
+         }
+
+    /* Responsive adjustments */
+         @media (max-width: 768px) {
+                         #quiz-selection-page { padding: clamp(1rem, 6vw, 1.5rem); }
+                         #quiz-selection-page .hub-header { padding: clamp(1.1rem, 4.5vw, 1.65rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.4rem; width: 100%; }
+                         #quiz-selection-page .quiz-card { padding: clamp(1.15rem, 4.5vw, 1.55rem); }
+                         .page-section .header {
+                             --header-inline-padding: clamp(0.9rem, 4.5vw, 1.35rem);
+                             padding: clamp(0.9rem, 4.5vw, 1.35rem) var(--header-inline-padding);
+                             gap: clamp(0.6rem, 3.5vw, 0.9rem);
+                             width: min(94vw, 520px);
+                             margin-left: auto;
+                             margin-right: auto;
+                         }
+                         .page-section .header-top { flex-direction: column; align-items: stretch; gap: clamp(0.55rem, 3vw, 0.85rem); }
+                         .page-section .header-controls { width: 100%; flex-direction: column; align-items: stretch; gap: clamp(0.6rem, 3.2vw, 0.9rem); }
+                         .page-section .header h1 { font-size: clamp(1.32rem, 3.5vw, 1.55rem); text-align: center; }
+                         .page-section .header-controls > * { width: min(100%, 360px); margin-left: auto; margin-right: auto; }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .quiz-container { margin: clamp(1rem, 5vw, 1.45rem) auto; padding: clamp(1.05rem, 4.5vw, 1.55rem); border-radius: 14px; width: min(94vw, 520px); }
+                         .page-section .options { grid-template-columns: 1fr; width: 100%; }
+                         .page-section .question { font-size: clamp(1.05rem, 4vw, 1.35rem); }
+                         .page-section .options button { font-size: 0.95rem; padding: clamp(0.85rem, 3.4vw, 0.95rem); }
+                         .page-section .next-button { padding: clamp(0.8rem, 3.4vw, 0.95rem); font-size: 0.95rem; }
+                         .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: clamp(0.7rem, 3.2vw, 0.9rem) clamp(1.1rem, 4vw, 1.4rem); font-size: 0.9rem; }
+                         .explanation { font-size: 0.85em; }
+                         .timer-container { font-size: 0.95rem; padding: clamp(0.45rem, 2.8vw, 0.6rem) clamp(0.55rem, 3vw, 0.7rem); justify-content: space-between; max-width: 360px; }
+                         .mode-toggle { width: min(100%, 360px); justify-content: space-between; font-size: 0.9rem; padding: clamp(0.5rem, 3.2vw, 0.65rem) clamp(0.8rem, 3.5vw, 1rem); margin-left: auto; margin-right: auto; }
+                         .mode-toggle input { width: clamp(2rem, 8.5vw, 2.3rem); height: clamp(0.9rem, 4vw, 1.1rem); }
+                         .mode-toggle input::after { width: clamp(0.65rem, 3.2vw, 0.85rem); height: clamp(0.65rem, 3.2vw, 0.85rem); }
+                         #celebration-page h1 { font-size: clamp(2.2rem, 6vw, 2.8rem); }
+                         #celebration-page p { font-size: clamp(1.1rem, 4vw, 1.3rem); }
+                         #celebration-page .back-button { font-size: 1.05rem; padding: 12px 30px; }
+                }
+         @media (max-width: 640px) {
+                         .page-section { padding-inline: clamp(0.6rem, 4.5vw, 1rem); padding-top: clamp(0.6rem, 5vw, 1.2rem); padding-bottom: clamp(0.9rem, 6vw, 1.9rem); }
+                         .page-section .header { margin: 0 auto clamp(0.45rem, 5vw, 0.85rem); width: min(92vw, 420px); }
+                         .page-section .quiz-container { padding: clamp(0.95rem, 5vw, 1.55rem); width: min(92vw, 420px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .links { gap: clamp(0.7rem, 4vw, 1rem); flex-wrap: wrap; }
+                         .page-section .links a { font-size: clamp(0.92rem, 3.4vw, 1.02rem); }
+                         .page-section .header-controls > * { width: min(100%, 320px); }
+                         .timer-container { max-width: 320px; }
+                         .mode-toggle { max-width: 320px; }
+                         #quiz-selection-page { padding: clamp(0.45rem, 4.5vw, 0.85rem); }
+                         #quiz-selection-page .hub-header { width: min(92vw, 420px); padding: clamp(0.45rem, 3.5vw, 0.85rem) clamp(0.6rem, 4vw, 1rem); margin: 0 auto clamp(0.65rem, 4.5vw, 1.1rem); border-radius: clamp(10px, 3.8vw, 14px); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.1rem, 4.6vw, 1.4rem); letter-spacing: 0.01em; line-height: 1.15; }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: clamp(1rem, 4.6vw, 1.4rem); justify-content: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.95rem, 5vw, 1.4rem); border-radius: clamp(16px, 4.5vw, 20px); }
+                         #quiz-selection-page .quiz-button { font-size: clamp(0.95rem, 3.8vw, 1rem); padding: clamp(0.75rem, 3.8vw, 0.95rem); }
+    }
+         @media (max-width: 480px) {
+                         #quiz-selection-page { padding: clamp(0.3rem, 6vw, 0.65rem); }
+                         #quiz-selection-page .hub-header { width: min(90vw, 360px); padding: clamp(0.4rem, 5.5vw, 0.75rem) clamp(0.55rem, 6vw, 0.9rem); border-radius: clamp(10px, 5vw, 14px); margin: 0 auto clamp(0.55rem, 6vw, 0.95rem); box-shadow: 0 3px 12px rgba(185, 28, 28, 0.16); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.05rem, 5.8vw, 1.35rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: 1fr; gap: clamp(0.8rem, 5vw, 1.1rem); justify-items: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.9rem, 6vw, 1.25rem); width: min(92vw, 370px); }
+                         .page-section .header-controls > * { width: min(100%, 300px); }
+                         .timer-container { max-width: 300px; }
+                         .mode-toggle { max-width: 300px; }
+                         .page-section .header { width: min(90vw, 360px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px) - 25px);
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px) + 12.5px);
+                         }
+                         .page-section .quiz-container { width: min(90vw, 360px); }
+                         #quiz-selection-page .quiz-card h2 { font-size: clamp(1.15rem, 6vw, 1.3rem); }
+                         #quiz-selection-page .quiz-button { font-size: 1rem; padding: 0.9rem; }
+             body { font-size: 14px; }
+             .page-section .header {
+                 --header-inline-padding: 15px;
+                 padding: 15px var(--header-inline-padding);
+             }
+             .page-section .header-top { align-items: stretch; }
+             .page-section .header-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+                         .page-section .header h1 { font-size: clamp(1.2rem, 6vw, 1.35rem); margin-bottom: 0; }
+             .timer-container { font-size: 0.9em; padding: 3px 6px; }
+                         .page-section .quiz-container { margin: 10px auto; padding: 15px; border-radius: 12px; }
+                         .page-section .options { width: 100%; }
+                         .page-section .question { font-size: 1.1em; margin-bottom: 15px; }
+             .page-section .options button { font-size: 0.9rem; padding: 12px; margin: 6px 0; }
+             .page-section .next-button { padding: 12px; font-size: 0.9rem; }
+             .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: 10px 18px; font-size: 0.9rem; }
+             .page-section .links a { font-size: 1em; }
+             .explanation { font-size: 0.8em; }
+                        #celebration-page h1 { font-size: 2.2em; }
+                            #celebration-page p { font-size: 1.1em; }
+                            #celebration-page .back-button { font-size: 1em; padding: 10px 25px; }
+                        .quiz-card .quiz-metrics { padding: 0.9rem; }
+                        .page-section .header-controls { gap: clamp(0.6rem, 4vw, 0.9rem); }
+                        .page-section .timer-container { width: 100%; justify-content: center; }
+                        .page-section .mode-toggle { gap: clamp(0.45rem, 3vw, 0.6rem); }
+        }
+
+        @media (max-width: 430px) and (max-height: 940px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.45rem, 5vw, 0.85rem);
+            }
+            body { font-size: 14px; }
+            .page-section {
+                padding: clamp(0.45rem, 5vw, 0.85rem) clamp(0.5rem, 6vw, 0.9rem) clamp(0.8rem, 6vw, 1.2rem);
+            }
+            .page-section .header,
+            .page-section .progress-bar-container,
+            .page-section .quiz-container {
+                width: 100%;
+                max-width: 350px;
+            }
+            .page-section .header {
+                --header-inline-padding: clamp(0.75rem, 5vw, 1rem);
+                padding: clamp(0.75rem, 5vw, 1rem) var(--header-inline-padding);
+            }
+            .page-section .quiz-container { padding: clamp(0.85rem, 5vw, 1.2rem); margin: clamp(0.75rem, 5vw, 1.2rem) auto; }
+            .page-section .header-controls > * { width: 100%; }
+            .timer-container,
+            .mode-toggle { max-width: 100%; }
+            #quiz-selection-page .hub-header,
+            #quiz-selection-page .quiz-card { width: 100%; max-width: 350px; }
+            #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 5vw, 1.15rem); }
+            .page-section .question { font-size: clamp(1rem, 5.4vw, 1.2rem); }
+            .page-section .options button { padding: clamp(0.75rem, 5vw, 0.95rem); font-size: 0.95rem; }
+            .page-section .next-button,
+            .page-section .retry-button,
+            .page-section .back-button,
+            .page-section .celebrate-button { padding: clamp(0.7rem, 5vw, 0.9rem) clamp(1rem, 6vw, 1.4rem); font-size: 0.95rem; }
+        }
+
+                @media (max-width: 360px) {
+                        .page-section .header h1 { font-size: clamp(1.1rem, 7vw, 1.3rem); }
+                        .page-section .question { font-size: clamp(1rem, 5.8vw, 1.2rem); }
+                        .page-section .options button { font-size: 0.85rem; padding: 11px; }
+                    .page-section .timer-container { font-size: 0.83rem; padding: 4px 6px; }
+                    .page-section .links a { font-size: 0.92rem; }
+                    #quiz-selection-page { padding: clamp(0.25rem, 6vw, 0.5rem); }
+                    #quiz-selection-page .hub-header { width: min(88vw, 320px); padding: clamp(0.35rem, 5.5vw, 0.7rem) clamp(0.5rem, 6vw, 0.8rem); margin: 0 auto clamp(0.45rem, 6vw, 0.75rem); }
+                    #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 6vw, 1.1rem); width: 100%; max-width: 320px; }
+                    .page-section .header { width: min(88vw, 320px); }
+                    .page-section .progress-bar-container {
+                        width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                        margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                    }
+                    .page-section .quiz-container { width: min(88vw, 320px); }
+                    .page-section .header-controls > * { width: min(100%, 280px); }
+                    .timer-container { max-width: 280px; }
+                    .mode-toggle { max-width: 280px; }
+                }
+
+    </style>
+</head>
+<body>
+    <div id="quiz-selection-page" class="page-section">
+        <div class="hub-header">
+            <div class="hub-title-row">
+                <span class="hub-logo" aria-hidden="true"><i class="fas fa-droplet fa-tint"></i></span>
+                <h1>Hydrotherapy Quiz Hub</h1>
+            </div>
+        </div>
+        <div class="quiz-grid">
+            <div id="lecture-1-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 1: Physical Properties of Water</h2>
+                <div class="quiz-metrics" id="lecture-1-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-1-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-1-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-1-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-1-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-1-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button lecture-1-button" onclick="showQuizPage('lecture-1')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-1')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-2-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 2: Aquatic Exercises Part 1</h2>
+                <div class="quiz-metrics" id="lecture-2-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-2-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-2-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-2-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-2-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-2-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-2')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-2')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-3-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 3: Aquatic Exercises Part 2</h2>
+                <div class="quiz-metrics" id="lecture-3-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-3-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-3-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-3-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-3-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-3-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-3')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-3')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-4-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 4: Aquatic Therapy Techniques</h2>
+                <div class="quiz-metrics" id="lecture-4-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-4-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-4-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-4-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-4-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-4-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-4')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-4')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+
+            <div id="lecture-5-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Module 5: Thermotherapy</h2>
+                <div class="quiz-metrics" id="lecture-5-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-5-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-5-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-5-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-5-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-5-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-5')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-5')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <!-- Other lecture cards can be added here if needed -->
+        </div>
+    </div>
+
+    <div id="lecture-1-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Physical Properties of Water Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-1-practice-toggle">
+                        <input type="checkbox" id="lecture-1-practice-toggle" onchange="togglePracticeMode('lecture-1', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-1-timer" class="timer-display">60</span>
+                        <span id="lecture-1-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-1-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-1-question-progress" class="question-progress"></div>
+            <div id="lecture-1-question" class="question"></div>
+            <div id="lecture-1-options" class="options"></div>
+            <div id="lecture-1-feedback" class="feedback"></div>
+            <button id="lecture-1-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-3-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Aquatic Exercises Part 2 Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-3-practice-toggle">
+                        <input type="checkbox" id="lecture-3-practice-toggle" onchange="togglePracticeMode('lecture-3', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-3-timer" class="timer-display">60</span>
+                        <span id="lecture-3-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-3-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-3-question-progress" class="question-progress"></div>
+            <div id="lecture-3-question" class="question"></div>
+            <div id="lecture-3-options" class="options"></div>
+            <div id="lecture-3-feedback" class="feedback"></div>
+            <button id="lecture-3-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-2-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Aquatic Exercises Part 1 Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-2-practice-toggle">
+                        <input type="checkbox" id="lecture-2-practice-toggle" onchange="togglePracticeMode('lecture-2', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-2-timer" class="timer-display">60</span>
+                        <span id="lecture-2-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-2-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-2-question-progress" class="question-progress"></div>
+            <div id="lecture-2-question" class="question"></div>
+            <div id="lecture-2-options" class="options"></div>
+            <div id="lecture-2-feedback" class="feedback"></div>
+            <button id="lecture-2-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-4-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Aquatic Therapy Techniques Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-4-practice-toggle">
+                        <input type="checkbox" id="lecture-4-practice-toggle" onchange="togglePracticeMode('lecture-4', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-4-timer" class="timer-display">60</span>
+                        <span id="lecture-4-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-4-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-4-question-progress" class="question-progress"></div>
+            <div id="lecture-4-question" class="question"></div>
+            <div id="lecture-4-options" class="options"></div>
+            <div id="lecture-4-feedback" class="feedback"></div>
+            <button id="lecture-4-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-5-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Thermotherapy Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-5-practice-toggle">
+                        <input type="checkbox" id="lecture-5-practice-toggle" onchange="togglePracticeMode('lecture-5', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-5-timer" class="timer-display">60</span>
+                        <span id="lecture-5-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-5-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-5-question-progress" class="question-progress"></div>
+            <div id="lecture-5-question" class="question"></div>
+            <div id="lecture-5-options" class="options"></div>
+            <div id="lecture-5-feedback" class="feedback"></div>
+            <button id="lecture-5-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="celebration-page" class="page-section">
+         <h1>Congratulations!</h1>
+         <p>You've perfectly completed the quiz!</p>
+         <button class="back-button" onclick="showHubPage()">Back to Hydrotherapy Quiz Hub</button>
+    </div>
+
+    <div id="explosion-overlay"></div>
+
+    <script>
+        // --- Shuffling Function (Fisher-Yates Algorithm) ---
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+          }
+        }
+
+        // --- Quiz Data Store ---
+        const quizData = {
+            'lecture-1': {
+                originalQuestions: [
+                    { question: "The term 'hydrotherapy' is derived from the Greek words 'hydro' and 'therapeia'. What does 'therapeia' mean?", a: "Water", b: "Healing", c: "Heat", d: "Movement", correct: "b", explanation: "The slide explicitly states that 'hydro' means 'water' and 'therapeia' means 'healing'." },
+                    { question: "Buoyancy is defined as an upward force that works opposite to which other force?", a: "Viscosity", b: "Hydrostatic pressure", c: "Surface drag", d: "Gravity", correct: "d", explanation: "The definition states that buoyancy is the 'upward force that works opposite to gravity'." },
+                    { question: "According to Archimedes' principle, if an object is denser than the fluid it is in, it will:", a: "Float", b: "Sink", c: "Remain suspended", d: "Dissolve", correct: "b", explanation: "This is direct factual recall - if an object is denser, it will sink." },
+                    { question: "In the average human body, the Center of Buoyancy (COB) is located in the:", a: "Chest region", b: "Pelvic region", c: "Abdominal region", d: "Center of the feet", correct: "a", explanation: "The Center of Gravity (COG) is near the S2 vertebrae, while the Center of Buoyancy (COB) is in the chest region." },
+                    { question: "A patient is immersed in water up to their anterior superior iliac spines (ASIS). Approximately how much of their body weight is being borne by their lower extremities?", a: "10%", b: "33%", c: "50%", d: "75%", correct: "c", explanation: "Immersion to the ASIS results in 50% weight-bearing." },
+                    { question: "To achieve minimal weight-bearing (approx. 10%) for a patient with severe joint pain, you should immerse them up to the:", a: "Neck (C7)", b: "Xiphoid process (Xiph)", c: "Anterior superior iliac spines (ASIS)", d: "Knees", correct: "a", explanation: "Immersion to the C7 level (neck) reduces weight-bearing to 10%." },
+                    { question: "A physical therapist wants to use buoyancy to resist a patient's hip motion. Which exercise would achieve this?", a: "Hip abduction (moving leg out to the side) while standing", b: "Hip flexion (lifting knee to chest) while standing", c: "Hip extension (pushing leg down from a flexed position) while standing", d: "Hip adduction (moving leg sideways) while lying on their back", correct: "c", explanation: "Buoyancy is an upward force. To use it as resistance, the movement must be directed against buoyancy (i.e., downward). Hip extension from a flexed position is a downward movement." },
+                    { question: "A substance with a specific gravity of 1.1 will do what in pure water?", a: "Float", b: "Sink", c: "Evaporate", d: "Remain suspended", correct: "b", explanation: "If the specific gravity is greater than 1, the substance is denser than water and will sink." },
+                    { question: "Which of the following substances has the lowest specific gravity?", a: "Salt water", b: "Ice", c: "Average human body", d: "Subcutaneous fat", correct: "d", explanation: "Subcutaneous fat is listed with a specific gravity of 0.85, which is the lowest." },
+                    { question: "A patient with a high percentage of adipose (fat) tissue will likely experience increased buoyancy. Why?", a: "Because adipose tissue has a higher specific gravity than muscle", b: "Because adipose tissue has a lower specific gravity than most other tissues", c: "Because fat increases the body's center of gravity", d: "Because fat is denser than water", correct: "b", explanation: "Specific gravity decreases with more adipose tissue and obese individuals have increased buoyancy because fat has a lower specific gravity." },
+                    { question: "How does holding a full breath of air affect a person's buoyancy?", a: "It increases buoyancy", b: "It decreases buoyancy", c: "It has no effect on buoyancy", d: "It makes the person sink faster", correct: "a", explanation: "Fully inflated lungs will increase buoyancy." },
+                    { question: "Hydrostatic pressure is defined as the pressure exerted by a fluid at rest. This pressure will:", a: "Be greater on the shoulders than on the feet in a standing patient", b: "Be equal at all depths of immersion", c: "Increase as the depth of immersion increases", d: "Decrease as the depth of immersion increases", correct: "c", explanation: "Pressure will vary depending on the depth of immersion and will be greater against the feet than against the shoulders." },
+                    { question: "What is the primary clinical application of hydrostatic pressure for a patient with post-surgical swelling in their ankle?", a: "Edema reduction", b: "Muscle strengthening", c: "Assisting upward movement", d: "Increasing joint range of motion", correct: "a", explanation: "Hydrostatic pressure can help reduce swelling and edema and is beneficial for post-surgical swelling." },
+                    { question: "Besides edema reduction, hydrostatic pressure also clinically helps to:", a: "Decrease the specific heat of water", b: "Increase stress on weight-bearing joints", c: "Improve circulation and assist venous return", d: "Increase nerve conduction velocity", correct: "c", explanation: "This is listed as a clinical application of hydrostatic pressure - improving circulation and assisting venous return." },
+                    { question: "Viscosity is defined as the friction between liquid molecules that results in:", a: "Resistance to flow", b: "Increased buoyancy", c: "A lower specific gravity", d: "An upward thrust", correct: "a", explanation: "This is the exact definition - friction between molecules resulting in resistance to flow." },
+                    { question: "Resistance from viscosity is proportional to the:", a: "Buoyancy of the object", b: "Velocity of the movement", c: "Depth of the water", d: "Temperature of the object", correct: "b", explanation: "Resistance from viscosity is proportional to the velocity of movement - the faster the limb is moved, the greater the resistance." },
+                    { question: "How does water temperature affect its viscosity?", a: "Warm water has a higher viscosity", b: "Warm water has a lower viscosity", c: "Cold water has a lower viscosity", d: "Temperature has no effect on viscosity", correct: "b", explanation: "Warm water has a lower viscosity." },
+                    { question: "A therapist wants to increase the resistance for a patient's exercise using the principle of surface drag. What is the best way to do this?", a: "Have the patient move very slowly", b: "Have the patient exercise in deeper water", c: "Have the patient wear a paddle or webbed glove", d: "Have the patient exercise in warmer water", correct: "c", explanation: "Increasing the surface area in contact with water leads to greater resistance. Paddles increase the hand's surface area." },
+                    { question: "What is the specific heat of water, which is used as the standard for other substances?", a: "0", b: "1", c: "1.024", d: "42", correct: "b", explanation: "The specific heat of water is 1." },
+                    { question: "Why is water's high specific heat clinically useful in hydrotherapy?", a: "It allows for precise and consistent temperature control", b: "It makes the water lighter, increasing buoyancy", c: "It increases the resistance to movement", d: "It causes the water to change temperature very quickly", correct: "a", explanation: "High specific heat allows for precise temperature control and consistent temperature conditions." },
+                    { question: "Smooth, orderly fluid motion where layers stream past each other is called:", a: "Turbulent flow", b: "Laminar flow", c: "Viscous flow", d: "Hydrostatic flow", correct: "b", explanation: "This is the definition of laminar flow, which is contrasted with the irregular motion of turbulent flow." },
+                    { question: "Water agitation and turbulence are clinically used for which of the following?", a: "Wound care and muscle relaxation", b: "Increasing joint compression", c: "Reducing the effects of buoyancy", d: "Practicing land-based gait", correct: "a", explanation: "This is the exact clinical application - wound care and muscle relaxation." },
+                    { question: "A patient is standing in a pool up to their xiphoid process (Xiph). How much weight are they bearing?", a: "10%", b: "33%", c: "50%", d: "100%", correct: "b", explanation: "Immersion to the xiphoid process results in 33% weight-bearing." },
+                    { question: "Which physical property of water is most responsible for reducing stress and compression on weight-bearing joints?", a: "Buoyancy", b: "Viscosity", c: "Specific Heat", d: "Hydrodynamics", correct: "a", explanation: "Buoyancy is used clinically to decrease stress and compression on weight-bearing joints." },
+                    { question: "A patient needs to maximize strengthening for their hip abductors (moving leg out to the side) while minimizing weight-bearing on their hip joint. What is the best exercise prescription?", a: "Perform slow hip abduction in shallow water (ASIS level)", b: "Perform fast hip abduction in shallow water (ASIS level)", c: "Perform slow hip abduction in deep water (Neck level)", d: "Perform fast hip abduction in deep water (Neck level)", correct: "d", explanation: "Deep water (Neck level) provides the least weight-bearing (10%), and resistance from viscosity is proportional to velocity - fast movements create more resistance. Therefore, fast movement in deep water maximizes strengthening while minimizing weight-bearing." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 25, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-2': {
+                originalQuestions: [
+                    { question: "A patient is immersed in water up to the level of their neck (C7). What percentage of their body weight is being borne by their lower extremities?", a: "10%", b: "33%", c: "50%", d: "90%", correct: "a", explanation: "The slide on 'Weight Bearing with Immersion' explicitly states that C7 immersion equals 10% weight-bearing." },
+                    { question: "A therapist wants a patient to bear approximately one-third (33%) of their body weight. To what level should the patient be immersed?", a: "C7 (Neck)", b: "Xiphoid process (Xiph)", c: "Anterior Superior Iliac Spines (ASIS)", d: "Knees", correct: "b", explanation: "The immersion chart shows that immersion to the Xiphoid process results in 33% weight-bearing." },
+                    { question: "Which physical property of water is most responsible for reducing swelling and edema by pushing excess fluids from the tissues?", a: "Buoyancy", b: "Hydrostatic pressure", c: "Warmth", d: "Resistance", correct: "b", explanation: "Hydrostatic pressure 'helps to reduce swelling by pushing excess fluids (edema) from the tissues'." },
+                    { question: "Which of the following is not listed as one of the six components of an aquatic physiotherapy treatment plan?", a: "Patient Assessment", b: "Insurance Verification", c: "Monitoring and Progression", d: "Documentation", correct: "b", explanation: "The six steps listed are Patient Assessment, Individualized Treatment Plan, Communication and Education, Monitoring and Progression, Re-Evaluation, and Documentation." },
+                    { question: "For a patient with fibromyalgia, what is the primary benefit of using warm water aquatic exercises?", a: "It provides high resistance to build muscle quickly", b: "It increases weight-bearing on the joints", c: "It relaxes muscles and helps alleviate pain", d: "It challenges the cardiovascular system", correct: "c", explanation: "Warm water 'relaxes muscles and helps alleviate pain' for fibromyalgia patients." },
+                    { question: "Aquatic therapy is indicated for patients after orthopedic surgery (like a joint replacement) primarily because buoyancy:", a: "Increases stress on the healing tissues", b: "Allows for early mobilization without excessive strain", c: "Makes strengthening exercises impossible", d: "Heals the incision site faster", correct: "b", explanation: "Buoyancy 'reduces weight-bearing... allowing for early mobilization... without putting excessive strain on healing tissues'." },
+                    { question: "A patient has uncontrolled seizures. How should this be classified for aquatic exercise?", a: "As a precaution", b: "As a contraindication", c: "As an indication", d: "As a safety consideration", correct: "b", explanation: "Uncontrolled seizures are listed as an absolute contraindication." },
+                    { question: "A patient has an open wound that is covered by a waterproof dressing. How should this be classified?", a: "As a precaution", b: "As a contraindication", c: "As an indication", d: "This patient can never use the pool", correct: "a", explanation: "An infectious condition or open wound is a contraindication, but the precaution list clarifies that patients with open wounds that are covered by waterproof dressings are a precaution." },
+                    { question: "Which of the following is an absolute contraindication to aquatic exercises?", a: "Fear of water", b: "Uncontrolled high blood pressure", c: "Severe, unstable cardiac conditions", d: "Asthma", correct: "c", explanation: "Fear of water, HBP, and asthma are all listed as precautions. Severe/unstable cardiac conditions are a contraindication." },
+                    { question: "A patient has uncontrolled high blood pressure. What is the main precaution the therapist must take?", a: "Avoid very cold water", b: "Avoid very warm water", c: "Ensure the patient uses flotation devices", d: "Only perform exercises in deep water", correct: "b", explanation: "The slide on blood pressure issues specifically states that these patients 'should avoid very warm water, as it can exacerbate hypertension'." },
+                    { question: "For a pregnant patient, what is the primary precaution regarding water temperature?", a: "Avoid full-body immersion in hot water to prevent maternal hyperthermia", b: "Avoid cold water as it can increase blood pressure", c: "Ensure the water is chlorinated", d: "Only use saltwater pools", correct: "a", explanation: "The slide on pregnancy states, 'Avoid full body immersion in hot water to avoid maternal hyperthermia'." },
+                    { question: "A 70-year-old patient has a high risk of falls. A benefit of aquatic therapy is that it:", a: "Increases the risk of injury from a fall", b: "Provides a safe environment for balance training", c: "Rapidly increases bone density", d: "Is a high-impact form of exercise", correct: "b", explanation: "For geriatric patients, buoyancy 'provides a safe environment for balance training exercises, reducing the risk of injuries'." },
+                    { question: "A patient with Raynaud's disease (a temperature sensitivity condition) is prescribed aquatic therapy. The therapist should:", a: "Ensure the water is very cold", b: "Avoid very cold water or have the patient use thermal swimwear", c: "Classify this as a contraindication and refuse treatment", d: "Only perform exercises on land", correct: "b", explanation: "Raynaud's is a 'Temperature Sensitivity' precaution, and the slide recommends avoiding very cold water." },
+                    { question: "What is the primary psychological benefit of aquatic exercise mentioned in the lecture?", a: "It increases mental alertness for tests", b: "It reduces anxiety and promotes relaxation", c: "It helps treat severe psychiatric disorders", d: "It improves long-term memory", correct: "b", explanation: "The water's soothing properties 'can reduce anxiety, promote relaxation, and improve overall mood'." },
+                    { question: "Which of the following is not listed as a benefit of aquatic exercises?", a: "Improved range of motion", b: "Increased cardiovascular conditioning", c: "Increased joint impact and compression", d: "Improved balance and coordination", correct: "c", explanation: "A primary benefit of aquatic exercise is that it decreases the weight-bearing impact on joints." },
+                    { question: "Which of the following conditions is a contraindication for aquatic therapy?", a: "Rheumatoid Arthritis", b: "Stroke Rehabilitation", c: "Obesity", d: "Uncontrolled Incontinence", correct: "d", explanation: "Arthritis, stroke, and obesity are all listed as indications. Uncontrolled incontinence is a contraindication." },
+                    { question: "What is a key 'Safety Consideration' regarding emergency procedures in an aquatic environment?", a: "Ensuring all patients can swim", b: "Having emergency equipment like life rings and reach poles available", c: "Testing the water temperature", d: "Ensuring all patients shower before entry", correct: "b", explanation: "While temperature and showering are considerations, the emergency safety slide specifically mentions 'life rings, reach poles'." },
+                    { question: "As part of infection control, what are users 'encouraged' to do before entering the pool?", a: "Test the water pH", b: "Check the filtration system", c: "Shower thoroughly", d: "Bring their own flotation devices", correct: "c", explanation: "It is recommended to 'Encourage users to shower thoroughly before entering the pool'." },
+                    { question: "A patient has a known allergy to pool chemicals. How should this be classified?", a: "As a precaution", b: "As a contraindication", c: "As an indication", d: "As a minor consideration", correct: "b", explanation: "Allergies to pool chemicals are listed as a contraindication." },
+                    { question: "A patient has asthma. This is classified as a precaution. When might this condition become a contraindication?", a: "If the patient is afraid of the water", b: "If the patient has severe respiratory distress or recent respiratory failure", c: "If the patient also has arthritis", d: "If the patient is pregnant", correct: "b", explanation: "Asthma is a precaution, but the contraindication list includes 'Severe respiratory conditions' and 'recent episodes of respiratory failure'." },
+                    { question: "A patient is immersed up to their ASIS (Anterior Superior Iliac Spines). What percentage of their body weight are they bearing?", a: "10%", b: "33%", c: "50%", d: "100%", correct: "c", explanation: "Immersion to the ASIS results in 50% weight-bearing." },
+                    { question: "Which step in the aquatic physiotherapy management plan involves periodic evaluations to track improvements and adjust the plan?", a: "Patient Assessment", b: "Individualized Treatment Plan", c: "Re-Evaluation", d: "Documentation", correct: "c", explanation: "The 'Re-Evaluation' slide specifically mentions conducting 'periodic evaluations to track the patient's improvements'." },
+                    { question: "Aquatic exercise is indicated for stroke rehabilitation because the reduced gravity in water allows patients to:", a: "Increase their blood pressure safely", b: "Practice movements they may struggle with on land", c: "Heal skin conditions", d: "Stop taking their medication", correct: "b", explanation: "The 'reduced gravity in the water allows patients to practice movements they may struggle with on land'." },
+                    { question: "A patient has a fear of water. What is the best course of action for the therapist?", a: "Contraindicate the patient from all aquatic therapy", b: "Provide an orientation period and use flotation devices", c: "Refer the patient to a psychologist immediately", d: "Tell the patient to perform exercises in the deep end", correct: "b", explanation: "'Fear of Water' is a precaution, and the recommended action is an 'orientation period' and 'proper use of flotation devices'." },
+                    { question: "Which of the following is an indication for aquatic exercise?", a: "Infectious skin diseases", b: "Postpartum recovery", c: "Severe respiratory distress", d: "Uncontrolled seizures", correct: "b", explanation: "Infectious disease, severe respiratory distress, and uncontrolled seizures are all contraindications. Postpartum recovery is an indication." },
+                    { question: "According to the 'Considerations' slides, what is a key instruction for infection control related to the pool water itself?", a: "Regularly test the water quality, including pH and chlorine levels", b: "Make sure all patients wear swim caps", c: "Keep the pool deck heated", d: "Use only saltwater systems", correct: "a", explanation: "The first instruction for infection control is to 'Regularly test the water quality, including pH, chlorine... levels'." },
+                    { question: "A patient with a stable cardiovascular condition (e.g., well-managed hypertension) is a precaution. A patient with a severe, unstable cardiac condition (e.g., recent heart attack) is a contraindication.", a: "True", b: "False", c: "Only true for pregnant patients", d: "Only true for geriatric patients", correct: "a", explanation: "The slides clearly differentiate between a managed 'Cardiovascular Condition' (precaution) and 'Severe Cardiac Conditions' like a recent heart attack (contraindication)." },
+                    { question: "Why is aquatic exercise beneficial for obesity management?", a: "It increases the impact on joints", b: "It reduces stress on joints due to buoyancy", c: "It allows the patient to float, requiring no effort", d: "It has a low calorie-burn rate", correct: "b", explanation: "The slide on obesity states that 'buoyancy reduces stress on joints, making it accessible'." },
+                    { question: "Which step in the management plan involves customizing exercises based on the patient's medical condition and fitness level?", a: "Patient Assessment", b: "Individualized Treatment Plan", c: "Re-Evaluation", d: "Documentation", correct: "b", explanation: "The slide for 'Individualized Treatment Plan' states the program 'must meet the specific needs and goals of the patient' and 'Customize exercises based on the patient's medical condition'." },
+                    { question: "Which of the following is not a benefit of aquatic exercise?", a: "Strengthens muscles", b: "Improves cardiovascular conditioning", c: "Reduces psychological anxiety", d: "Increases stress on joints", correct: "d", explanation: "A primary benefit of buoyancy is that it decreases weight-bearing and reduces stress on joints." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 30, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-3': {
+                originalQuestions: [
+                    { question: "A therapist wants to increase the resistance a patient experiences while performing a leg exercise. According to the lecture, which variable is most effective to modify?", a: "Increase the speed of the movement", b: "Use warmer water", c: "Use buoyancy aids like a noodle", d: "Have the patient move slower", correct: "a", explanation: "The slides state that resistance is related to speed; 'faster movements can meet more resistance from the water'. Warmer water relaxes muscles, and buoyancy aids provide support." },
+                    { question: "A patient has acute inflammation and edema (swelling) after an injury. Which water temperature is most appropriate for their aquatic therapy session?", a: "Warmer water", b: "Cooler water", c: "Room temperature water", d: "Temperature does not matter", correct: "b", explanation: "The slides explicitly state that 'cooler water can provide decrease inflammation and edema'. Warmer water is used to relax muscles and improve circulation." },
+                    { question: "What is the primary purpose of using 'Buoyancy Aids' such as flotation devices and aqua belts?", a: "To increase resistance for strengthening", b: "To support and stabilize patients during exercises", c: "To decrease inflammation", d: "To create water turbulence", correct: "b", explanation: "The lecture defines buoyancy aids as tools 'used to support and stabilize patients during exercises'. Resistance tools (like dumbbells) are used to increase intensity." },
+                    { question: "To increase the intensity and strengthen muscles, a therapist would incorporate which of the following?", a: "Buoyancy aids like a water noodle", b: "Resistance tools like water dumbbells or paddles", c: "Slower movements", d: "A seated body position", correct: "b", explanation: "The slides differentiate 'Buoyancy Aids' (for support) from 'Resistance Tools,' which are used to 'increase the intensity' and are 'effective for strengthening muscles'." },
+                    { question: "A patient with arthritis needs to exercise in an environment with reduced weight-bearing on their joints. The therapist should recommend exercises in:", a: "Shallow water", b: "Deep water", c: "Cooler water", d: "Turbulent water", correct: "b", explanation: "The slides state that 'deep water exercises can reduce weight-bearing on joints, making them suitable for patients with arthritis'. Shallow water provides less buoyancy and support." },
+                    { question: "A therapist designs a program with longer exercise durations and more repetitions. This approach primarily targets:", a: "Strength development", b: "Endurance training", c: "Power", d: "Decreasing inflammation", correct: "b", explanation: "The slides state, 'Longer exercise durations and more repetitions increase endurance training'." },
+                    { question: "To focus on strength development, the therapist should modify the exercise variables to include:", a: "Shorter durations with higher resistance", b: "Longer durations with low resistance", c: "Slower movements for control", d: "Buoyancy aids for support", correct: "a", explanation: "The slides specify that 'shorter durations with higher resistance may target strength development'." },
+                    { question: "Slower movements in the water are used to emphasize:", a: "Increased resistance", b: "Cardiovascular endurance", c: "Control and stability", d: "Muscle power", correct: "c", explanation: "The slides contrast speeds: 'Slower movements emphasize control and stability, while faster movements can meet more resistance'." },
+                    { question: "A patient finds a standing aquatic exercise too difficult. Which modification would make the exercise less challenging?", a: "Perform the exercise in a seated or kneeling position", b: "Increase the speed of the exercise", c: "Add resistance cuffs", d: "Add water turbulence", correct: "a", explanation: "The slides state that 'exercises performed in a seated or kneeling position may be less challenging than those performed in a standing or floating position'. The other options all increase the difficulty." },
+                    { question: "Which of the following is not listed as one of the 8 variables to modify aquatic exercises?", a: "Water Depth", b: "Water Temperature", c: "Exercise Speed", d: "Patient's Diet", correct: "d", explanation: "The 8 variables listed are: Water Depth, Water Temperature, Buoyancy Aids, Resistance Tools, Duration/Repetition/Frequency, Exercise Speed, Body Position, and Turbulence." },
+                    { question: "Which of the following is not listed as a 'Type of aquatic exercise' in the lecture?", a: "Stretching Exercises", b: "Strengthening Exercises", c: "Aerobic Exercises", d: "High-Intensity Weightlifting", correct: "d", explanation: "The slides list types like Stretching, ROM, Strengthening, Aerobic, Balance, Sports, Pilates, and Yoga. While strengthening is a type, high-intensity weightlifting (like on land) is not specifically listed and often not replicable in water." },
+                    { question: "According to the lecture, a movement directed upward (with the direction of buoyancy) is called:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Buoyancy-neutral", correct: "a", explanation: "This is a key definition: 'Buoyancy-assisted: Movement directed with the direction of buoyancy (upward)'." },
+                    { question: "A movement directed horizontally (eliminating buoyancy's push or pull) is called:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Buoyancy-neutral", correct: "b", explanation: "This is a key definition: 'Buoyancy-supported: Movement directed with buoyancy eliminating (horizontal)'." },
+                    { question: "A movement directed downward (against the direction of buoyancy) is called:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Buoyancy-neutral", correct: "c", explanation: "This is a key definition: 'Buoyancy-resisted: Movement directed against buoyancy (downward)'." },
+                    { question: "Which of the following is not one of the 6 components a physiotherapist must determine when describing an aquatic exercise?", a: "Purpose of the exercise", b: "The direction of motion", c: "The patient's pain level", d: "Aquatic equipment needed", correct: "c", explanation: "While pain level is a vital part of assessment, it is not one of the 6 components listed for describing an exercise. The 6 components are: Purpose, Movement, Direction of motion, Position, Equipment, and Action/Order." },
+                    { question: "In the 'Passive shoulder adductors stretching' example, what is the patient's position?", a: "Standing", b: "Seated", c: "Supine lying position", d: "Prone (face down)", correct: "c", explanation: "The example explicitly states, 'Patient Position: supine lying position' for this specific stretch." },
+                    { question: "In the 'Passive shoulder adductors stretching' example, what is the direction of movement?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Against turbulence", correct: "b", explanation: "The movement (shoulder abduction) is horizontal in the supine position, so it is 'Buoyancy-supported'." },
+                    { question: "What equipment is specified for the 'Passive shoulder adductors stretching' example to help the patient float?", a: "Water dumbbells", b: "Resistance cuffs", c: "Ankle weights", d: "Inflatable cervical collars and aquatic belt", correct: "d", explanation: "The example lists the equipment as 'Inflatable cervical collars and aquatic belt'." },
+                    { question: "In the 'Self-Stretching for quadriceps' example, what is the direction of movement?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Horizontal", correct: "a", explanation: "As the patient flexes the knee, buoyancy helps lift the foot upward, making the movement 'Buoyancy-assisted'." },
+                    { question: "Active-assisted exercises (AAROM) are defined as active movements where the assistance is provided by:", a: "The therapist's hands", b: "Water turbulence", c: "The buoyancy of water", d: "Resistance dumbbells", correct: "c", explanation: "This is a key definition: 'this assistant is achieved by the buoyancy of water'." },
+                    { question: "An active-assisted exercise for one muscle (e.g., shoulder abductors) can also serve as a:", a: "Strengthening exercise for the same muscle", b: "Self-stretch for the opposite muscle (e.g., shoulder adductors)", c: "Cardiovascular exercise", d: "A passive-range-of-motion exercise", correct: "b", explanation: "This is a key concept: 'Active-assisted for Shoulder Abduction (Self-Stretching for shoulder adductors)'." },
+                    { question: "In the 'Active-assisted for Shoulder Abduction' example, what is the patient's position?", a: "Supine lying", b: "Standing, holding the rail", c: "Upright, neck level immersion", d: "Seated on a step", correct: "c", explanation: "The example states, 'Patient Position: Upright, neck level immersion'." },
+                    { question: "What is the correct piece of equipment to use for 'Active-assisted for Shoulder Abduction'?", a: "A heavy ankle weight", b: "A buoyant dumbbell", c: "A resistance paddle", d: "A kickboard", correct: "b", explanation: "To assist abduction (an upward/outward movement), a buoyant device is needed. The buoyant dumbbell is the correct tool for the job." },
+                    { question: "In the 'Active-assisted for hip abduction' example, what is the direction of movement?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Downward", correct: "a", explanation: "Hip abduction is moving the leg away from the body (upward/outward), so buoyancy assists it." },
+                    { question: "A patient is standing and performs a hip extension exercise (pushing their leg down from a flexed position). This movement is:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Horizontal", correct: "c", explanation: "A downward movement goes against the upward force of buoyancy, making it 'Buoyancy-resisted'. This is a strengthening exercise." },
+                    { question: "A patient is performing shoulder adduction (moving their arm down to their side) while holding a buoyant dumbbell. What type of exercise is this?", a: "Strengthening (Buoyancy-resisted)", b: "Stretching (Buoyancy-assisted)", c: "Passive ROM (Buoyancy-supported)", d: "Active-assisted ROM", correct: "a", explanation: "The movement is downward ('resisted'). A buoyant dumbbell wants to float up. Forcing it down creates resistance, making this a strengthening exercise." },
+                    { question: "A patient is performing shoulder abduction (moving their arm up to the surface) while holding a buoyant dumbbell. What type of exercise is this?", a: "Strengthening (Buoyancy-resisted)", b: "Active-assisted ROM (Buoyancy-assisted)", c: "Passive ROM (Buoyancy-supported)", d: "Strengthening (Buoyancy-supported)", correct: "b", explanation: "The movement is upward ('assisted'). The buoyant dumbbell wants to float up, so it helps the patient lift their arm. This is the definition of an active-assisted exercise." },
+                    { question: "A therapist wants to create resistance for a patient by using 'Turbulence.' This can be achieved by:", a: "Having the patient exercise in a pool with adjustable water flow/jets", b: "Having the patient hold buoyant dumbbells", c: "Using cooler water", d: "Having the patient sit in a chair", correct: "a", explanation: "The slide on turbulence specifically mentions 'adjustable formation of turbulence' that 'can be used to create resistance'." },
+                    { question: "Which of these is a 'Range of motion (ROM)' exercise type specifically listed in the lecture?", a: "Passive Range of Motion (PROM)", b: "Resisted Range of Motion", c: "Isokinetic Range of Motion", d: "Ballistic Range of Motion", correct: "a", explanation: "The slide lists three types of ROM: Passive (PROM), Active (AROM), and Active-Assistive (AAROM)." },
+                    { question: "Which variable modification would be least effective for increasing muscle strength?", a: "Using resistance paddles", b: "Increasing exercise speed", c: "Using buoyancy aids like an aqua belt", d: "Walking against water turbulence", correct: "c", explanation: "Resistance paddles, increased speed, and turbulence are all used to increase resistance and challenge muscles. Buoyancy aids are used for support and stabilization, which generally makes an exercise easier, not harder." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 30, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-4': {
+                originalQuestions: [
+                    { question: "A movement directed upward, with the direction of buoyancy, is called:", a: "Buoyancy-resisted", b: "Buoyancy-supported", c: "Buoyancy-assisted", d: "Buoyancy-neutral", correct: "c", explanation: "The slides explicitly define a movement directed with buoyancy (upward) as 'Buoyancy-assisted'." },
+                    { question: "A movement directed horizontally, eliminating the main effects of buoyancy, is called:", a: "Buoyancy-resisted", b: "Buoyancy-supported", c: "Buoyancy-assisted", d: "Buoyancy-neutral", correct: "b", explanation: "The slides define a horizontal movement where buoyancy is eliminated as 'Buoyancy-supported'." },
+                    { question: "A movement directed downward, against the direction of buoyancy, is called:", a: "Buoyancy-resisted", b: "Buoyancy-supported", c: "Buoyancy-assisted", d: "Buoyancy-neutral", correct: "a", explanation: "The slides define a movement directed against buoyancy (downward) as 'Buoyancy-resisted'." },
+                    { question: "According to the lecture, which of the following is NOT one of the 6 components a physiotherapist must determine when describing an aquatic exercise?", a: "The purpose of the exercise", b: "The direction of motion", c: "The patient's pain level", d: "The aquatic equipment needed", correct: "c", explanation: "While pain is a crucial part of patient assessment, the 6 components listed for describing an exercise are Purpose, Movement, Direction, Position, Equipment, and Action." },
+                    { question: "In the \"Passive shoulder adductors stretching\" example, what is the specified patient position?", a: "Supine lying position", b: "Standing at neck level", c: "Sitting on a step", d: "Prone (face-down)", correct: "a", explanation: "The example on slide 5 clearly states the 'Patient Position: supine lying position'." },
+                    { question: "For the \"Passive shoulder adductors stretching\" example, what is the direction of movement (shoulder abduction)?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Against turbulence", correct: "b", explanation: "In a supine position, moving the arm out to the side (abduction) is a horizontal movement, which is classified as 'Buoyancy-supported'." },
+                    { question: "In Active-Assisted Exercises, what provides the assistance to the patient's active movement?", a: "The therapist's hands", b: "The buoyancy of water", c: "Resistance from a water jet", d: "Ankle weights", correct: "b", explanation: "The slides define these exercises as involving 'active movement by the patient, with some level of assistance this assistant is achieved by the buoyancy of water'." },
+                    { question: "An active-assisted exercise for shoulder abduction also functions as a self-stretch for which muscle group?", a: "Shoulder abductors", b: "Shoulder adductors", c: "Biceps", d: "Triceps", correct: "b", explanation: "The slides explicitly state that 'The same exercise can be self-stretch for the opposite muscle' and title the example 'Active-assisted for Shoulder Abduction (Self-Stretching for shoulder adductors)'." },
+                    { question: "What equipment is specified for the \"Active-assisted for Shoulder Abduction\" exercise?", a: "Inflatable cervical collar", b: "Ankle cuff", c: "Buoyant dumbbell or wrist strap", d: "No equipment is needed", correct: "c", explanation: "The example on slide 7 lists the 'Equipment: Small or large buoyant dumbbell or wrist strap'." },
+                    { question: "What is the correct patient position for the \"Active-assisted for Shoulder Abduction\" example?", a: "Supine lying", b: "Upright, neck level immersion", c: "Standing, water at waist level", d: "Seated on a step", correct: "b", explanation: "The example on slide 7 specifies 'Patient Position: Upright, neck level immersion'." },
+                    { question: "Why might a therapist choose to start strengthening exercises in the water earlier than on land?", a: "Because water reduces joint compression and pain", b: "Because water increases resistance by 100x", c: "Because all aquatic strengthening is 'manual resistance'", d: "Because water makes the muscles weaker", correct: "a", explanation: "The slides state that 'By reducing joint compression and pain, immersed strengthening exercises may be safely initiated earlier in the rehabilitation program'." },
+                    { question: "In the \"Shoulder Abductor or Adductor against manual resistance\" example, what is the direction of movement?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Downward", correct: "b", explanation: "The patient is supine, so moving the arm horizontally for abduction/adduction is classified as 'Buoyancy-supported'." },
+                    { question: "For the \"Resisted exercises for shoulder adductors\" example, what is the direction of motion?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Upward", correct: "c", explanation: "The exercise involves actively moving the arm down ('away from the water surface') to an adducted position. A downward movement against buoyancy is 'Buoyancy-resisted'." },
+                    { question: "What is the correct starting position for the \"Resisted exercises for shoulder adductors\" example?", a: "Supine lying with arm at the side", b: "Standing with shoulder at 90° abduction", c: "Standing with arm at the side", d: "Seated with arm at 90° abduction", correct: "b", explanation: "The example on slide 10 specifies the 'Patient Position: Stride standing... with the shoulder at $90^{0}$ abduction'." },
+                    { question: "In the \"Resisted exercises for hip extensor\" example, what is the direction of motion?", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Horizontal", correct: "c", explanation: "The action is to 'actively extend the flexed lower limb against the water', which is a downward movement. This is 'Buoyancy-resisted'." },
+                    { question: "A patient is standing and lifts their knee toward their chest (hip flexion). This movement is:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Closed-chain", correct: "a", explanation: "Lifting the knee is an upward movement. Buoyancy provides an upward force, so this motion is 'Buoyancy-assisted'." },
+                    { question: "A patient is standing with their hip flexed to 90 degrees and then actively pushes their foot down to the pool floor (hip extension). This movement is:", a: "Buoyancy-assisted", b: "Buoyancy-supported", c: "Buoyancy-resisted", d: "Open-chain", correct: "c", explanation: "Pushing the foot down is a downward movement against the upward force of buoyancy, making it 'Buoyancy-resisted'. This is the exact principle of the hip extensor strengthening exercise." },
+                    { question: "What is the defining characteristic of \"Deep Water Exercise\"?", a: "The water is at least 200 cm deep", b: "The patient's feet do not touch the bottom", c: "The exercises are all 'closed-chain'", d: "No equipment can be used", correct: "b", explanation: "The slides define this as exercises where 'the patient's feet do not touch the bottom'." },
+                    { question: "What is the recommended water depth for \"Deep Water Exercise\" to ensure the patient is suspended?", a: "50-100 cm", b: "100-120 cm", c: "120-150 cm", d: "150-180 cm", correct: "d", explanation: "The slides specify that 'the depth of the water should be at least 150-180 cm so that the patient is suspended'." },
+                    { question: "Because the feet are not fixed to the bottom, exercises in deep water are termed:", a: "Open chain", b: "Closed chain", c: "Buoyancy-supported", d: "Isokinetic", correct: "a", explanation: "The lecture states, 'the exercises that are capable of being performed are termed open chain'." },
+                    { question: "What is the primary characteristic of \"Midlevel to Shallow-Level Exercise\"?", a: "The patient's feet do not touch the bottom", b: "It permits the body to move over a fixed distal extremity (weight-bearing)", c: "It is always 'open-chain'", d: "It must be done in water 150-180 cm deep", correct: "b", explanation: "The slides state that these depths 'permit the body to move over a fixed distal extremity promoting some weight-bearing'." },
+                    { question: "Activities performed in shallow water, where there is weight-bearing on the distal extremities, are considered:", a: "Open-chain activities", b: "Closed-chain activities", c: "PNF activities", d: "Shiatsu activities", correct: "b", explanation: "The slides explicitly state, 'Activities in these depths of water would be considered 'closed-chain' activities'." },
+                    { question: "How does a therapist progress (increase) the amount of weight-bearing for a patient in aquatic therapy?", a: "Move to deeper water", b: "Use shallower water depths", c: "Use buoyancy aids", d: "Increase the water temperature", correct: "b", explanation: "This is a key clinical application. 'Progression in weight-bearing is accomplished through the use of shallower water depths'." },
+                    { question: "Which aquatic therapy technique is named after a town in Switzerland and is based on the principles of PNF?", a: "Halliwick Method", b: "WATSU", c: "Ai Chi", d: "Bad Ragaz Ring Technique", correct: "d", explanation: "The slides identify the 'Bad Ragaz Ring technique' as being named after a town in Switzerland and 'based upon the principles of PNF'." },
+                    { question: "Which technique, developed by James McMillan in the 1940s, focuses on achieving independent mobility and water safety?", a: "Halliwick Method", b: "WATSU", c: "Bad Ragaz Ring Technique", d: "Ai Chi", correct: "a", explanation: "The 'Halliwick Method' was 'developed in the United Kingdom by James McMillan in the 1940s' and 'focuses on achieving independence mobility in the water'." },
+                    { question: "A patient is looking for a therapy that combines shiatsu massage and stretches while floating in warm water. Which technique would you recommend?", a: "Halliwick Method", b: "Ai Chi", c: "WATSU", d: "Deep Water Exercise", correct: "c", explanation: "'WATSU, short for 'Water Shiatsu,'... combines elements of shiatsu massage, stretches, and movements while the recipient is floating in warm water'." },
+                    { question: "Which aquatic therapy technique was developed in Japan by Jun Konno and combines elements of Tai Chi and Qigong?", a: "WATSU", b: "Ai Chi", c: "Halliwick Method", d: "Bad Ragaz Ring Technique", correct: "b", explanation: "'Ai Chi is a form of aquatic exercise... that was developed in Japan by Jun Konno'. It 'combines elements of Tai Chi, Qigong, and water-based exercises'." },
+                    { question: "A patient wants to work on relaxation, mindfulness, balance, and flexibility in chest-deep warm water. Which technique is most appropriate?", a: "Ai Chi", b: "Deep Water Exercise", c: "WATSU", d: "Halliwick Method", correct: "a", explanation: "Ai Chi is 'performed in chest-deep warm water' and is 'designed to promote relaxation, mindfulness, balance, and flexibility'." },
+                    { question: "Which of the following is an example of an aquatic aerobic exercise listed in the lecture?", a: "Passive shoulder stretching", b: "Running in deep water", c: "Resisted hip extension", d: "WATSU", correct: "b", explanation: "The slides provide 'Running in deep water while wearing a vest' as an example of an aquatic aerobic exercise." },
+                    { question: "Aquatic aerobic exercises are gentle on the body due to the water's buoyancy and can be used as a precursor to:", a: "Land-based cardiovascular training", b: "Advanced stretching", c: "Open-chain exercises", d: "PNF techniques", correct: "a", explanation: "The slides state that aquatic aerobic exercise 'may be used as a precursor to land-based cardiovascular training'." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 30, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-5': {
+                originalQuestions: [
+                    { question: "What is the definition of thermotherapy?", a: "The application of any substance that decreases tissue temperature.", b: "The application of any substance that increases tissue temperature for therapeutic goals.", c: "The use of water for healing.", d: "The transfer of heat via sound waves.", correct: "b", explanation: "This is the exact definition provided on slide 5." },
+                    { question: "What is the temperature range for 'Therapeutic heat'?", a: "30-35°C", b: "35-40°C", c: "40-45°C", d: "45-50°C", correct: "c", explanation: "This is a 'Specific Number' recall question from slide 5." },
+                    { question: "A hot pack transfers heat to a patient's skin through which mechanism?", a: "Conduction", b: "Convection", c: "Radiation", d: "Conversion", correct: "a", explanation: "Conduction is heat transfer through direct contact. The hot pack is the therapeutic example given for conduction." },
+                    { question: "A whirlpool or Fluidotherapy transfers thermal energy via which mechanism?", a: "Conduction", b: "Convection", c: "Radiation", d: "Conversion", correct: "b", explanation: "Convection is the transfer of heat by the movement of air or liquid. Whirlpool and Fluidotherapy are the therapeutic examples given." },
+                    { question: "An infrared heat lamp is a therapeutic example of which heat exchange mechanism?", a: "Conduction", b: "Convection", c: "Radiation", d: "Conversion", correct: "c", explanation: "Radiation is the transfer of heat via electromagnetic waves. The infrared lamp is the example provided." },
+                    { question: "Therapeutic ultrasound generates heat by transforming mechanical energy into thermal energy. This mechanism is called:", a: "Conduction", b: "Convection", c: "Radiation", d: "Conversion", correct: "d", explanation: "Conversion is the transformation of one form of energy (like sound waves) into another (heat)." },
+                    { question: "Why does heat transfer occur at a faster rate with convection (moving water) than with conduction (stationary water)?", a: "The moving water constantly replaces the cooled-down layer with new hot water.", b: "The stationary water creates more pressure.", c: "The moving water converts energy more efficiently.", d: "The stationary water radiates heat away from the body.", correct: "a", explanation: "This is a clinical application of the principle. Conduction (stationary water) forms a stable layer, while convection (moving water) constantly brings new, hot molecules into contact with the skin, making the transfer faster." },
+                    { question: "What is the normal core temperature range of the human body?", a: "34.5-35.5°C", b: "35.5-36.5°C", c: "36.5-37.5°C", d: "37.5-38.5°C", correct: "c", explanation: "This is a 'Specific Number' recall from slide 12." },
+                    { question: "Which of the following is NOT listed as one of the body's primary 'Temperature-regulating mechanisms'?", a: "Changes in circulation (vasodilation)", b: "Shivering", c: "Sweating", d: "Increased heart rate", correct: "d", explanation: "Slide 15 lists three mechanisms: changes in circulation, shivering, and sweating. While heart rate might change, it's not listed as a primary thermoregulating mechanism." },
+                    { question: "What is the primary vascular effect of applying heat to a tissue?", a: "Vasoconstriction", b: "Vasodilation", c: "Decreased blood flow", d: "Cyanosis (bluish skin)", correct: "b", explanation: "The slides state that elevating tissue temperature results in a 'vasodilatory response' and an 'increase in blood flow'." },
+                    { question: "What is the purpose of the vasodilation (increased blood flow) that occurs in response to heat?", a: "To trap the heat in the area for healing.", b: "To remove cooler blood from the area.", c: "To prevent excessive heat accumulation by bringing in cooler blood.", d: "To cause a systemic drop in blood pressure.", correct: "c", explanation: "This is the body's protective (thermoregulating) response. The aim is to 'remove heat from the area' and bring in 'blood that is relatively cooler... thus preventing excessive heat accumulation'." },
+                    { question: "Heat causes the release of chemical mediators. The release of Prostaglandins and Histamine directly causes:", a: "Vasodilation", b: "Vasoconstriction", c: "Increased vascular permeability", d: "Muscle spasm", correct: "a", explanation: "The diagram on slide 20 shows that Prostaglandins and Histamine lead directly to vasodilation." },
+                    { question: "The release of Kallikrein in response to heat leads to the formation of Bradykinin, which causes:", a: "Vasodilation", b: "Decreased vascular permeability", c: "Increased vascular permeability", d: "Muscle strengthening", correct: "c", explanation: "The diagram on slide 20 shows Kallikrein leads to Bradykinin, which in turn leads to '↑ Vascular permeability'." },
+                    { question: "A patient has a 'vascular disease' (e.g., poor circulation) in their leg. Why is applying a hot pack to this leg dangerous?", a: "The patient's vasodilation response will be too strong.", b: "The heat will cause vasoconstriction and pain.", c: "The patient's body cannot remove the heat, leading to accumulation and a skin burn.", d: "The heat will cause reflex cooling in the other leg.", correct: "c", explanation: "This is a 'Clinical Key Point.' A patient with vascular disease has an impaired ability to increase blood flow, so they cannot remove the heat, which can lead to a burn." },
+                    { question: "A patient has an open wound on their right foot, and the therapist applies heat to the low back to increase circulation in the foot. This is an example of:", a: "Conduction heating", b: "Reflex heating", c: "Conversion heating", d: "An adverse effect", correct: "b", explanation: "This is a 'Clinical Key Point.' Reflex heating is used 'to cause vasodilatation on area of the body that heat application can't be applied directly'." },
+                    { question: "Why is it a bad idea to apply heat to a patient with acute inflammation (e.g., a sprained ankle from 1 hour ago)?", a: "It will cause vasoconstriction and stop the healing process.", b: "It will increase inflammatory mediators and potentially cause more tissue damage.", c: "It will decrease the metabolic rate and slow down healing.", d: "It will cause a muscle spasm.", correct: "b", explanation: "This is a 'Clinical Key Point.' Acute inflammation already involves an increase in inflammatory mediators, and applying heat 'would potentially make that worse'." },
+                    { question: "For every 10°C rise in tissue temperature, the metabolic rate increases by:", a: "10-fold", b: "5- to 6-fold", c: "2- to 3-fold", d: "0.5-fold (it decreases)", correct: "c", explanation: "This is a 'Specific Number' recall from slide 22." },
+                    { question: "How does an increased metabolic rate (from heat) promote tissue healing after the acute stage?", a: "It slows down chemical reactions.", b: "It increases oxygen uptake by the tissues.", c: "It causes vasoconstriction to protect the tissue.", d: "It decreases the tissue's elastic properties.", correct: "b", explanation: "The slides state that 'Oxygen uptake by the tissues increases,' which helps promote tissue healing by making more nutrients available." },
+                    { question: "Which of the following is a DIRECT mechanism by which heat decreases pain?", a: "Decreasing muscle spasm", b: "Decreasing ischemia", c: "Activating the Gate Control Theory", d: "Accelerating healing", correct: "c", explanation: "The diagram on slide 24 lists three direct mechanisms: increasing pain threshold, increasing nerve conduction velocity, and the Gate Control Theory. The other options are listed as indirect." },
+                    { question: "Which of the following is an INDIRECT mechanism by which heat decreases pain?", a: "Increasing the pain threshold", b: "Increasing nerve conduction velocity", c: "Decreasing muscle spasm", d: "Activating the Gate Control Theory", correct: "c", explanation: "The diagram on slide 24 lists three indirect mechanisms: decreasing ischemia, decreasing muscle spasm, and accelerated healing. The other options are direct." },
+                    { question: "What happens to muscle strength and endurance during the initial 30 minutes after applying a heating agent?", a: "They increase significantly.", b: "They decrease.", c: "They do not change.", d: "They fluctuate unpredictably.", correct: "b", explanation: "This is a 'Specific Number/Time' recall. The slides state that muscle strength and endurance 'decrease during the initial 30 minutes after applying' heat." },
+                    { question: "What happens to muscle strength approximately 2 hours after a heat application?", a: "It remains decreased.", b: "It returns to the normal pre-treatment level.", c: "It gradually recovers to above pretreatment levels.", d: "It is permanently reduced.", correct: "c", explanation: "The slides note that after the initial 30-minute decrease, 'muscle strength gradually recovers to above pretreatment levels' over the next 2 hours." },
+                    { question: "A therapist wants to get an accurate measurement of a patient's quadriceps strength (MMT). When is the best time to do this?", a: "Before applying a hot pack to the thigh.", b: "Immediately after applying a hot pack.", c: "15 minutes after applying a hot pack.", d: "While the hot pack is on the patient.", correct: "a", explanation: "This is a 'Clinical Key Point.' Because heat decreases strength for the first 30 minutes, you must 'measure muscle strength before applying heat, not after' to get an accurate assessment." },
+                    { question: "A volleyball player wants to use a hot pack on her shoulder to 'warm-up' right before a big game. Why is this a bad idea?", a: "Her muscle strength will be decreased for the first 30 minutes, negatively impacting performance.", b: "The heat will cause a muscle spasm.", c: "The heat will decrease her tissue extensibility, making her too tight.", d: "The heat will cause vasoconstriction and reduce blood flow.", correct: "a", explanation: "This is a 'Clinical Reasoning' question. Since strength is decreased for 30 minutes after heat, any activity (like a game) must be done with precaution. It would be detrimental to her performance." },
+                    { question: "How does heat application affect the connective tissue (e.g., muscles, tendons)?", a: "It increases viscosity and decreases elastic properties.", b: "It decreases viscosity and increases elastic properties.", c: "It has no effect on connective tissue.", d: "It causes the tissue to become more brittle.", correct: "b", explanation: "The slides state that heat has been 'shown to decrease viscosity and increase the elastic properties of connective tissue'." },
+                    { question: "To achieve the greatest increase in tissue length (extensibility) with the least amount of force, a therapist should:", a: "Apply stretching only.", b: "Apply heat only.", c: "Apply heat before or during stretching.", d: "Apply cold during stretching.", correct: "c", explanation: "This is a 'Clinical Key Point.' When tissue is 'heated before or during stretching, it achieves a greater increase in length' with 'less force... and the risk of tissue tearing is reduced'." },
+                    { question: "The combination of heat application and stretching leads to what kind of tissue change?", a: "Elastic deformation (temporary)", b: "Plastic deformation (permanent)", c: "Tissue tearing", d: "Muscle spasm", correct: "b", explanation: "Slide 28 explicitly states that 'Combine heat application and stretch lead to plastic deformation'. This means a lasting change in the tissue's length." },
+                    { question: "Which of the following is NOT listed as one of the 5 main physical mechanisms of heat exchange?", a: "Conduction", b: "Convection", c: "Hydrostatic Pressure", d: "Radiation", correct: "c", explanation: "Hydrostatic pressure is a physical property of water (from the previous lectures), not a mechanism of heat exchange. The 5 mechanisms listed are Conduction, Convection, Radiation, Conversion, and Evaporation." },
+                    { question: "Which of the body's thermoregulation centers 'acts as a thermostat'?", a: "The skin", b: "The blood vessels", c: "The thermoregulatory centre (in the brain)", d: "The heart", correct: "c", explanation: "The diagram on slide 13 clearly labels the 'THERMOREGULATORY CENTRE' in the brain and states it 'ACTS AS A THERMOSTAT'." },
+                    { question: "Stationary water (like in a bath) transfers heat by ______, while moving water (like in a whirlpool) transfers heat by ______.", a: "Conduction; Convection", b: "Convection; Conduction", c: "Radiation; Conversion", d: "Conversion; Radiation", correct: "a", explanation: "This is a key concept from slide 9. 'Stationary water can transfer heat by conduction while moving water by convection'. Hot packs (stationary) are conduction, and whirlpools (moving) are convection." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 30, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            }
+        };
+
+        let activeQuizId = null;
+        const PAGE_TRANSITION_DURATION = 450;
+        const QUESTION_TIME_LIMIT = 60; 
+        const EXPLOSION_DURATION = 1200;
+
+        function applyStateDefaults(quizId, state) {
+            if (!quizData[quizId]) return state;
+            const defaults = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: quizData[quizId].originalQuestions.length,
+                incorrectQuestions: [],
+                completedPerfectly: false,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed',
+                questions: [...quizData[quizId].originalQuestions]
+            };
+            const merged = { ...defaults, ...state };
+            if (!Array.isArray(merged.questions) || merged.questions.length === 0) {
+                merged.questions = [...quizData[quizId].originalQuestions];
+            }
+            merged.timerIntervalId = null;
+            merged.questionStartTimestamp = null;
+            merged.keyboardIndex = null;
+            if (merged.practiceMode) merged.sessionMode = 'practice';
+            if (!merged.sessionMode) merged.sessionMode = merged.practiceMode ? 'practice' : 'timed';
+            return merged;
+        }
+
+        function recordTimeSpent(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+            if (!state.questionStartTimestamp) return;
+            const elapsed = Math.max(0, Math.round((Date.now() - state.questionStartTimestamp) / 1000));
+            state.elapsedSeconds = (state.elapsedSeconds || 0) + elapsed;
+            state.questionStartTimestamp = null;
+        }
+
+        function updateQuestionProgress(quizId) {
+            const progressEl = document.getElementById(`${quizId}-question-progress`);
+            const data = quizData[quizId];
+            if (!progressEl || !data || !data.state) return;
+            const total = data.questions ? data.questions.length : 0;
+            const currentIndex = data.state.currentQuestion;
+
+            if (!total || currentIndex >= total) {
+                progressEl.textContent = '';
+                progressEl.classList.remove('practice-mode');
+                return;
+            }
+
+            const parts = [`Question ${Math.min(currentIndex + 1, total)} of ${total}`];
+            if (data.state.practiceMode) parts.push('Practice mode');
+            progressEl.textContent = parts.join(' • ');
+            progressEl.classList.toggle('practice-mode', !!data.state.practiceMode);
+        }
+
+        function updatePracticeModeUI(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const practiceToggle = document.getElementById(`${quizId}-practice-toggle`);
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+
+            if (practiceToggle) practiceToggle.checked = !!data.state.practiceMode;
+            if (data.state.practiceMode) {
+                if (data.state.timerIntervalId) {
+                    clearInterval(data.state.timerIntervalId);
+                    data.state.timerIntervalId = null;
+                }
+                if (timerDisplay) timerDisplay.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+            } else {
+                if (timerDisplay) timerDisplay.textContent = data.state.timeRemaining ?? QUESTION_TIME_LIMIT;
+                if (timerUnit) timerUnit.style.display = '';
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+            }
+            updateQuestionProgress(quizId);
+        }
+
+        function togglePracticeMode(quizId, enabled) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            recordTimeSpent(quizId);
+            if (data.state.timerIntervalId) {
+                clearInterval(data.state.timerIntervalId);
+                data.state.timerIntervalId = null;
+            }
+            data.state.practiceMode = !!enabled;
+            data.state.timeRemaining = QUESTION_TIME_LIMIT;
+            data.state.sessionMode = data.state.practiceMode ? 'practice' : 'timed';
+            updatePracticeModeUI(quizId);
+            if (!data.state.practiceMode) {
+                startQuestionTimer(quizId);
+            }
+            const optionsContainer = getElement(quizId, 'options');
+            const hasActiveOptions = optionsContainer && Array.from(optionsContainer.querySelectorAll('button')).some(btn => !btn.disabled);
+            data.state.questionStartTimestamp = hasActiveOptions ? Date.now() : null;
+            saveQuizState(quizId);
+        }
+
+        function getQuizStats(quizId) {
+            const defaults = {
+                attempts: 0,
+                bestPercent: null,
+                bestScore: null,
+                bestTotal: null,
+                lastScore: null,
+                lastTotal: null,
+                lastPercent: null,
+                perfectRuns: 0,
+                totalTimeSeconds: 0,
+                practiceRuns: 0,
+                lastPlayedAt: null
+            };
+            try {
+                const raw = localStorage.getItem(`quizStats_${quizId}`);
+                if (!raw) return { ...defaults };
+                const parsed = JSON.parse(raw);
+                return { ...defaults, ...parsed };
+            } catch (e) {
+                console.warn('Failed to parse stats for', quizId, e);
+                return { ...defaults };
+            }
+        }
+
+        function saveQuizStats(quizId, stats) {
+            localStorage.setItem(`quizStats_${quizId}`, JSON.stringify(stats));
+        }
+
+        function formatScoreValue(score, total, percent) {
+            if (typeof score !== 'number' || typeof total !== 'number' || total === 0) return '—';
+            const percentText = typeof percent === 'number' ? `${percent.toFixed(1)}%` : `${((score / total) * 100).toFixed(1)}%`;
+            return `${score}/${total} (${percentText})`;
+        }
+
+        function formatDuration(totalSeconds) {
+            if (!totalSeconds || totalSeconds <= 0) return '—';
+            const seconds = Math.max(0, Math.round(totalSeconds));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) {
+                return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+            }
+            return `${minutes}m ${secs.toString().padStart(2, '0')}s`;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return null;
+            try {
+                const date = new Date(timestamp);
+                if (Number.isNaN(date.getTime())) return null;
+                return date.toLocaleString([], { hour12: true });
+            } catch (error) {
+                console.warn('Failed to format timestamp', error);
+                return null;
+            }
+        }
+
+        function updateQuizMetricsUI(quizId, stats = null) {
+            const quizStats = stats || getQuizStats(quizId);
+            const bestEl = document.getElementById(`${quizId}-best-score`);
+            const lastEl = document.getElementById(`${quizId}-last-score`);
+            const perfectEl = document.getElementById(`${quizId}-perfect-runs`);
+            const avgTimeEl = document.getElementById(`${quizId}-average-time`);
+            const lastPlayedEl = document.getElementById(`${quizId}-last-played`);
+
+            if (bestEl) bestEl.textContent = quizStats.bestScore != null && quizStats.bestTotal != null
+                ? formatScoreValue(quizStats.bestScore, quizStats.bestTotal, quizStats.bestPercent)
+                : '—';
+
+            if (lastEl) lastEl.textContent = quizStats.lastScore != null && quizStats.lastTotal != null
+                ? formatScoreValue(quizStats.lastScore, quizStats.lastTotal, quizStats.lastPercent)
+                : '—';
+
+            if (perfectEl) perfectEl.textContent = quizStats.perfectRuns || 0;
+
+            if (avgTimeEl) {
+                const averageSeconds = quizStats.attempts > 0 && quizStats.totalTimeSeconds
+                    ? quizStats.totalTimeSeconds / quizStats.attempts
+                    : 0;
+                avgTimeEl.textContent = formatDuration(averageSeconds);
+            }
+
+            if (lastPlayedEl) {
+                const formatted = formatTimestamp(quizStats.lastPlayedAt);
+                lastPlayedEl.textContent = formatted || '—';
+            }
+        }
+
+        function buildIncorrectReview(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !Array.isArray(data.state.incorrectQuestions) || data.state.incorrectQuestions.length === 0) {
+                return '';
+            }
+
+            const items = data.state.incorrectQuestions.map((item, index) => {
+                const correctAnswerText = item && item.correct && item[item.correct] ? item[item.correct] : 'Not available';
+                const questionLabel = item && item.question ? item.question : `Question ${index + 1}`;
+                return `
+                    <details>
+                        <summary>${questionLabel}</summary>
+                        <div class="review-body">
+                            <div><strong>Correct answer:</strong> ${correctAnswerText}</div>
+                            ${item && item.explanation ? `<div class="explanation">${item.explanation}</div>` : ''}
+                        </div>
+                    </details>
+                `;
+            }).join('');
+
+            return `
+                <div class="results-accordion">
+                    <h3>Review your tricky questions</h3>
+                    ${items}
+                </div>
+            `;
+        }
+
+        function setupOptionKeyboardNavigation(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(quizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length) {
+                data.state.keyboardIndex = null;
+                return;
+            }
+            buttons.forEach((btn, index) => {
+                btn.dataset.optionIndex = index.toString();
+            });
+            data.state.keyboardIndex = 0;
+            buttons[0].focus({ preventScroll: true });
+        }
+
+        function handleOptionNavigation(event) {
+            if (!activeQuizId) return;
+            const data = quizData[activeQuizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(activeQuizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length || buttons.every(btn => btn.disabled)) return;
+
+            const state = data.state;
+            if (typeof state.keyboardIndex !== 'number') state.keyboardIndex = 0;
+
+            const maxIndex = buttons.length - 1;
+            let handled = false;
+
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+                state.keyboardIndex = state.keyboardIndex >= maxIndex ? 0 : state.keyboardIndex + 1;
+                handled = true;
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+                state.keyboardIndex = state.keyboardIndex <= 0 ? maxIndex : state.keyboardIndex - 1;
+                handled = true;
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                const targetBtn = buttons[state.keyboardIndex];
+                if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                handled = true;
+            } else if (/^[1-9]$/.test(event.key)) {
+                const numericIndex = parseInt(event.key, 10) - 1;
+                if (numericIndex >= 0 && numericIndex <= maxIndex) {
+                    const targetBtn = buttons[numericIndex];
+                    if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                    state.keyboardIndex = numericIndex;
+                    handled = true;
+                }
+            }
+
+            if (handled) {
+                event.preventDefault();
+                const focusBtn = buttons[state.keyboardIndex];
+                if (focusBtn && !focusBtn.disabled) focusBtn.focus({ preventScroll: true });
+            }
+        }
+
+        function triggerScreenFlash() {
+            const flash = document.createElement('div');
+            flash.className = 'full-screen-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => {
+                flash.remove();
+            }, 400); // Match animation duration
+        }
+
+        function createExplosion(x, y, color = 'orange') {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) return;
+
+            overlay.style.display = 'block';
+
+            const particleCount = 40;
+            const angleIncrement = (2 * Math.PI) / particleCount;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'explosion-particle';
+                particle.style.backgroundColor = color;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                overlay.appendChild(particle);
+
+                const angle = i * angleIncrement;
+                const distance = 50 + Math.random() * 150;
+                const duration = 600 + Math.random() * 600;
+
+                const translateX = Math.cos(angle) * distance;
+                const translateY = Math.sin(angle) * distance;
+
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${translateX}px, ${translateY}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.1, 0.7, 0.5, 1)',
+                    fill: 'forwards'
+                });
+
+                setTimeout(() => {
+                    particle.remove();
+                }, duration);
+            }
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, EXPLOSION_DURATION);
+        }
+
+        // --- Helper to get elements by ID prefix ---
+        function getElement(quizId, elementSuffix) {
+            if (!quizId) return null;
+            return document.getElementById(`${quizId}-${elementSuffix}`);
+        }
+
+        // --- Page Transition Animation (Scale and Fade) ---
+        function animatePageTransition(element, direction, duration, callback) {
+            if (!element) { if (callback) callback(); return; }
+            if (element.animationFrameId) cancelAnimationFrame(element.animationFrameId);
+
+            let startTime = null;
+            const startOpacity = direction === 'in' ? 0 : 1;
+            const endOpacity = direction === 'in' ? 1 : 0;
+            const startScale = direction === 'in' ? 1.05 : 1;
+            const endScale = direction === 'in' ? 1 : 0.95;
+            const startBlur = direction === 'in' ? 5 : 0;
+            const endBlur = direction === 'in' ? 0 : 5;
+
+            if (direction === 'in') {
+                element.style.opacity = startOpacity;
+                element.style.transform = `scale(${startScale})`;
+                element.style.filter = `blur(${startBlur}px)`;
+                element.style.display = (element.id === 'celebration-page') ? 'flex' : 'block';
+            }
+
+            function animateFrame(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsedTime = timestamp - startTime;
+                const progress = Math.min(1, elapsedTime / duration);
+                const easedProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+
+                const currentOpacity = startOpacity + (endOpacity - startOpacity) * easedProgress;
+                const currentScale = startScale + (endScale - startScale) * easedProgress;
+                const currentBlur = startBlur + (endBlur - startBlur) * easedProgress;
+
+                element.style.opacity = currentOpacity;
+                element.style.transform = `scale(${currentScale})`;
+                element.style.filter = `blur(${currentBlur}px)`;
+
+                if (progress < 1) {
+                    element.animationFrameId = requestAnimationFrame(animateFrame);
+                } else {
+                    element.style.opacity = endOpacity;
+                    element.style.transform = `scale(${endScale})`;
+                    element.style.filter = `blur(${endBlur}px)`;
+                    element.animationFrameId = null;
+                    if (direction === 'out') {
+                        element.style.display = 'none';
+                        element.style.transform = 'scale(1)';
+                        element.style.filter = 'blur(0px)';
+                    }
+                    if (callback) callback();
+                }
+            }
+            element.animationFrameId = requestAnimationFrame(animateFrame);
+        }
+
+
+        // --- Navigation Functions ---
+        function transitionToPage(targetPageId) {
+            const allPages = document.querySelectorAll('.page-section');
+            let currentPage = null;
+            allPages.forEach(page => {
+                if (page.classList.contains('active-page')) {
+                    currentPage = page;
+                }
+            });
+
+            const targetPage = document.getElementById(targetPageId);
+            if (!targetPage) {
+                console.error(`Target page ${targetPageId} not found.`);
+                return;
+            }
+
+            if (currentPage && currentPage !== targetPage) {
+                currentPage.classList.remove('active-page');
+                currentPage.style.zIndex = 0;
+                animatePageTransition(currentPage, 'out', PAGE_TRANSITION_DURATION);
+            }
+
+            targetPage.style.position = 'absolute';
+            targetPage.style.zIndex = 1;
+            animatePageTransition(targetPage, 'in', PAGE_TRANSITION_DURATION, () => {
+                targetPage.classList.add('active-page');
+                targetPage.style.position = 'relative';
+                 // Re-render MathJax content if the target page is a quiz page
+                if (targetPageId.includes('-quiz-page') && typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise();
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+
+        function showQuizPage(quizId) {
+            activeQuizId = quizId;
+            if (!quizData[quizId] || !quizData[quizId].originalQuestions) {
+                console.error(`Quiz data missing for: ${quizId}`);
+                showHubPage();
+                return;
+            }
+            // Load state from localStorage
+            const savedState = loadQuizState(quizId);
+
+          if(savedState) {
+              const hydratedState = applyStateDefaults(quizId, savedState);
+              quizData[quizId].state = hydratedState;
+              quizData[quizId].questions = hydratedState.questions;
+          } else {
+              resetQuizState(quizId); // Fresh start
+              quizData[quizId].questions = [...quizData[quizId].originalQuestions];
+          }
+
+
+            const targetPageId = `${quizId}-quiz-page`;
+            const quizPage = document.getElementById(targetPageId);
+
+            if (quizPage) {
+                transitionToPage(targetPageId);
+                updatePracticeModeUI(quizId);
+                if (quizData[quizId].questions.length > 0) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const qContainer = getElement(quizId, 'question');
+                    if (qContainer) qContainer.textContent = "No questions loaded for this quiz yet.";
+                    const oContainer = getElement(quizId, 'options');
+                    if (oContainer) oContainer.innerHTML = '';
+                     const timerDisp = getElement(quizId, 'timer');
+                    if (timerDisp) timerDisp.textContent = QUESTION_TIME_LIMIT; 
+                    updateQuestionProgress(quizId);
+                }
+            } else {
+                console.error(`Quiz page element not found: ${targetPageId}`);
+                showHubPage();
+            }
+        }
+
+        function showHubPage() {
+            if (activeQuizId) {
+                recordTimeSpent(activeQuizId);
+                saveQuizState(activeQuizId); // Save progress when leaving a quiz
+                if(quizData[activeQuizId] && quizData[activeQuizId].state.timerIntervalId){
+                    clearInterval(quizData[activeQuizId].state.timerIntervalId);
+                    quizData[activeQuizId].state.timerIntervalId = null;
+                }
+            }
+            activeQuizId = null;
+            updateHubUI(); // Update the hub page buttons and checkmarks
+            transitionToPage('quiz-selection-page');
+        }
+
+        function showCelebrationPage() { // This is for the *overall* celebration
+            activeQuizId = null;
+            transitionToPage('celebration-page');
+            const celebrationPage = document.getElementById('celebration-page');
+            if (celebrationPage) startConfetti(celebrationPage); // Confetti from center for overall
+        }
+
+        // --- Quiz State Persistence ---
+        function saveQuizState(quizId) {
+            if (!quizData[quizId] || !quizData[quizId].state) return;
+            // Don't save state if quiz is completed
+             if (quizData[quizId].state.currentQuestion >= quizData[quizId].questions.length) {
+                localStorage.removeItem(`quizState_${quizId}`);
+                return;
+            }
+            const stateForStorage = {
+                ...quizData[quizId].state,
+                timerIntervalId: null,
+                questionStartTimestamp: null
+            };
+            localStorage.setItem(`quizState_${quizId}`, JSON.stringify(stateForStorage));
+        }
+
+        function loadQuizState(quizId) {
+            const savedStateJSON = localStorage.getItem(`quizState_${quizId}`);
+            if (savedStateJSON) {
+                return JSON.parse(savedStateJSON);
+            }
+            return null;
+        }
+
+        function retryWholeQuiz(quizId) {
+            localStorage.removeItem(`quizState_${quizId}`); // Clear saved progress
+            quizData[quizId].state.completedPerfectly = false; // Reset perfect status
+            localStorage.setItem(`quiz_${quizId}_completed`, 'false'); // Mark as not completed
+            resetQuizState(quizId);
+            showQuizPage(quizId);
+        }
+
+        // --- Quiz State Management ---
+        function resetQuizState(quizId) {
+            const data = quizData[quizId];
+            if (!data) { console.error(`Cannot reset state for non-existent quiz ID: ${quizId}`); return; }
+
+            if (!data.originalQuestions) data.originalQuestions = [];
+            data.questions = [...data.originalQuestions];
+
+            // Only load completion status from storage.
+            const wasOriginalQuizPerfected = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+            const mcqCount = data.originalQuestions.length;
+
+
+            if (data.state && data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: mcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: [...data.originalQuestions], // Start with full question set
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed'
+            };
+
+            data.questions = [...data.state.questions];
+
+            const progressBar = getElement(quizId, 'progress-bar');
+            if (progressBar) progressBar.style.width = '0%';
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+            if (timerDisplay) {
+                timerDisplay.textContent = QUESTION_TIME_LIMIT; 
+            }
+            if(timerContainer) {
+                 timerContainer.classList.remove('low-time');
+            }
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+        }
+
+
+        // --- Display Logic ---
+        function showQuizQuestion(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.questions || !data.state) { console.error(`Invalid data for quiz: ${quizId}`); showHubPage(); return; }
+
+            const state = data.state;
+            const questions = data.questions;
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            
+            // Update progress bar at the beginning of showing a question
+            const progressBar = getElement(quizId, 'progress-bar');
+            const totalQuestionsInCurrentAttempt = questions.length;
+            if(progressBar && totalQuestionsInCurrentAttempt > 0) {
+                 const progressPercentage = Math.min(100, ((state.currentQuestion) / totalQuestionsInCurrentAttempt) * 100);
+                 progressBar.style.width = `${progressPercentage}%`;
+            }
+
+
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) {
+                console.error(`UI elements missing for quiz: ${quizId}`); return;
+            }
+
+            const existingResults = questionContainer.querySelector('.results-buttons');
+            if (existingResults) questionContainer.innerHTML = '';
+
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.innerHTML = '';
+            nextButton.style.display = 'none';
+            optionsContainer.innerHTML = '';
+
+            state.questionStartTimestamp = Date.now();
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'visible';
+
+
+            if (state.currentQuestion < questions.length) {
+                const q = questions[state.currentQuestion];
+                if (!q || typeof q.question !== 'string') {
+                    console.error(`Invalid question data: ${quizId}, index ${state.currentQuestion}`, q);
+                    advanceQuestion(quizId, true);
+                    return;
+                }
+                questionContainer.innerHTML = `Q${state.currentQuestion + 1}: ${q.question}`;
+                
+                if (!q.a || !q.b || !q.c || !q.d) {
+                     console.error(`MCQ options missing or malformed: ${quizId}, index ${state.currentQuestion}`, q);
+                     advanceQuestion(quizId, true);
+                     return;
+                }
+                const options = [{key:'a', text:q.a}, {key:'b', text:q.b}, {key:'c', text:q.c}, {key:'d', text:q.d}];
+                if (q.e) options.push({key:'e', text:q.e});
+
+                const shuffledOptions = [...options];
+                shuffleArray(shuffledOptions);
+
+                shuffledOptions.forEach(optionObj => {
+                    const button = document.createElement('button');
+                    button.textContent = optionObj.text;
+                    button.dataset.key = optionObj.key;
+                    button.onclick = () => checkQuizAnswer(quizId, optionObj.key);
+                    optionsContainer.appendChild(button);
+                });
+                setupOptionKeyboardNavigation(quizId);
+                startQuestionTimer(quizId);
+                
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([questionContainer, optionsContainer]);
+                }
+
+            } else {
+                state.questionStartTimestamp = null;
+                updateQuestionProgress(quizId);
+                showQuizResults(quizId);
+            }
+        }
+
+        // --- Answer Checking & Advancement ---
+        function checkQuizAnswer(quizId, selectedKey) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            const questions = data.questions;
+            if (state.currentQuestion >= questions.length) { console.error("Invalid question index."); return; }
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const currentQData = questions[state.currentQuestion];
+            const correctKey = currentQData.correct;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            if (!optionsContainer || !feedbackContainer || !nextButton) return;
+
+            feedbackContainer.style.display = 'block';
+            feedbackContainer.innerHTML = ''; // Clear previous feedback
+
+            const isCorrect = selectedKey === correctKey;
+
+            if (isCorrect) {
+                state.score++;
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:bounceIn 0.7s;"><i class='fa-solid fa-face-laugh-beam' style='color:#10B981;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:bounceIn 0.7s;">Bravo! Good job!</div>
+                  <div class="explanation">${currentQData.explanation || 'Well done!'}</div>
+                `;
+                if (typeof confetti !== 'undefined') confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            } else {
+                feedbackContainer.className = 'feedback incorrect';
+                const correctAnswerText = currentQData[correctKey];
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-frown' style='color:#EF4444;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">Oh no! Try again!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                 if (data.questions.length === data.originalQuestions.length) {
+                    data.state.completedPerfectly = false; // If any answer is wrong in the main quiz, it's not perfect
+                    localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                }
+            }
+
+            optionsContainer.querySelectorAll('button').forEach(btn => {
+                btn.disabled = true;
+                const btnKey = btn.dataset.key;
+                if(btnKey === correctKey) {
+                    btn.style.background = 'rgba(34, 197, 94, 0.35)'; // Correct Green
+                    btn.style.borderColor = 'rgba(74, 222, 128, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-check' style='color:#10B981;'></i> ${btn.textContent.trim()}`;
+                } else if (btnKey === selectedKey) {
+                    btn.style.background = 'rgba(239, 68, 68, 0.35)'; // Incorrect Red
+                    btn.style.borderColor = 'rgba(252, 165, 165, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-xmark' style='color:#EF4444;'></i> ${btn.textContent.trim()}`;
+                }
+            });
+
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                MathJax.typesetPromise([feedbackContainer]);
+            }
+            saveQuizState(quizId); // Save state after an answer
+            nextButton.textContent = "Next Question";
+            nextButton.style.display = 'block';
+            nextButton.onclick = () => advanceQuestion(quizId, false);
+            // Add fun feedback animations (only once)
+            if (!document.getElementById('fun-feedback-animations')) {
+                const style = document.createElement('style');
+                style.id = 'fun-feedback-animations';
+                style.innerHTML = `
+                @keyframes bounceIn {
+                  0% { transform: scale(0.7); opacity: 0.5; }
+                  70% { transform: scale(1.15); opacity: 1; }
+                  100% { transform: scale(1); }
+                }
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  20%, 60% { transform: translateX(-10px); }
+                  40%, 80% { transform: translateX(10px); }
+                }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function handleNonMcqNextClick(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            if (state.currentQuestion >= data.questions.length) { console.error("Invalid index."); return; }
+
+            const q = data.questions[state.currentQuestion];
+            const nextButton = getElement(quizId, 'next-button');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            if (!nextButton || !feedbackContainer) return;
+
+            if (nextButton.textContent === "Show Answer") {
+                let answerPrefix = "Answer:";
+                if (q.type === "scientific_term") answerPrefix = "Scientific Term:";
+                else if (q.type === "enumerate") answerPrefix = "Enumeration:";
+                else if (q.type === "image_label") answerPrefix = "Labels / Answer:";
+
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `<div><strong>${answerPrefix}</strong></div><div class="explanation">${q.answer || 'No answer provided.'}</div>`;
+                feedbackContainer.style.display = 'block';
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                 saveQuizState(quizId); // Save state after showing answer
+                nextButton.textContent = "Next Question";
+            } else {
+                advanceQuestion(quizId, false);
+            }
+        }
+
+        function advanceQuestion(quizId, fromTimer = false) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const executeAdvance = () => {
+                state.currentQuestion++;
+                if (state.currentQuestion < data.questions.length) {
+                    state.timeRemaining = QUESTION_TIME_LIMIT;
+                }
+                saveQuizState(quizId); // Save state before showing next question
+
+                const questions = data.questions;
+                if (state.currentQuestion < questions.length) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const progressBar = getElement(quizId, 'progress-bar');
+                    if(progressBar) progressBar.style.width = '100%';
+                    showQuizResults(quizId);
+                }
+            };
+
+            if (fromTimer) {
+                playExplosionAnimation(executeAdvance);
+            } else {
+                const timerContainer = getElement(quizId, 'timer')?.closest('.timer-container');
+                if (timerContainer) timerContainer.classList.remove('low-time');
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+                executeAdvance();
+            }
+        }
+
+
+        // --- Timer and Explosion Functions ---
+        function startQuestionTimer(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplaySpan ? timerDisplaySpan.closest('.timer-container') : null;
+            if (timerContainer) {
+                timerContainer.parentElement && (timerContainer.parentElement.style.visibility = 'visible');
+            }
+
+            if (data.state.practiceMode) {
+                if (timerDisplaySpan) timerDisplaySpan.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+                data.state.timerIntervalId = null;
+                return;
+            }
+
+            const withinRange = typeof data.state.timeRemaining === 'number' && data.state.timeRemaining > 0 && data.state.timeRemaining <= QUESTION_TIME_LIMIT;
+            data.state.timeRemaining = withinRange ? data.state.timeRemaining : QUESTION_TIME_LIMIT;
+
+            if (timerDisplaySpan) {
+                timerDisplaySpan.textContent = data.state.timeRemaining;
+            }
+            if (timerUnit) timerUnit.style.display = '';
+            if (timerContainer) {
+                timerContainer.classList.remove('practice-mode');
+                timerContainer.classList.remove('low-time');
+            }
+
+
+            data.state.timerIntervalId = setInterval(() => {
+                data.state.timeRemaining--;
+                if (timerDisplaySpan) timerDisplaySpan.textContent = data.state.timeRemaining;
+
+                if (data.state.timeRemaining <= 10 && data.state.timeRemaining > 0) {
+                    if (timerContainer) timerContainer.classList.add('low-time');
+                }
+                if (data.state.timeRemaining <= 0) handleTimeUp(quizId);
+            }, 1000);
+        }
+
+        function handleTimeUp(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.practiceMode) return; // Timer shouldn't expire in practice mode
+
+            if (data.state.timerIntervalId) { clearInterval(data.state.timerIntervalId); data.state.timerIntervalId = null; }
+
+            recordTimeSpent(quizId);
+            data.state.questionStartTimestamp = null;
+
+            const optionsContainer = getElement(quizId, 'options');
+            if (optionsContainer) optionsContainer.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const currentQData = data.questions[data.state.currentQuestion];
+            if (feedbackContainer && currentQData) {
+                const correctAnswerText = currentQData[currentQData.correct] || "N/A";
+                feedbackContainer.className = 'feedback timeup';
+                let feedbackHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-surprise' style='color:#F59E0B;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">⏰ Time is up!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                feedbackContainer.innerHTML = feedbackHTML;
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                feedbackContainer.style.display = 'block';
+
+
+                if (currentQData.a && currentQData.correct) {
+                    data.state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                    if (data.questions.length === data.originalQuestions.length) {
+                         data.state.completedPerfectly = false;
+                         localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                    }
+                }
+            }
+            const nextButton = getElement(quizId, 'next-button');
+            if(nextButton) nextButton.style.display = 'none';
+
+            advanceQuestion(quizId, true);
+        }
+
+        function playExplosionAnimation(callback) {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) { if (callback) callback(); return; }
+
+            const activeQuizPage = document.querySelector('.page-section.active-page');
+            const quizContainer = activeQuizPage ? activeQuizPage.querySelector('.quiz-container') : null;
+            const originX = quizContainer ? quizContainer.offsetLeft + quizContainer.offsetWidth / 2 : window.innerWidth / 2;
+            const originY = quizContainer ? quizContainer.offsetTop + quizContainer.offsetHeight / 2 : window.innerHeight / 2;
+
+            overlay.innerHTML = '';
+            overlay.style.display = 'block';
+
+            const flash = document.createElement('div');
+            flash.classList.add('full-screen-flash');
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 400);
+
+            const numParticles = 35;
+            const colors = ['#FFD700', '#FFAB00', '#FF6F00', '#FF3D00', '#DD2C00', '#FFFFFF'];
+
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('explosion-particle');
+                particle.style.left = `${originX}px`;
+                particle.style.top = `${originY}px`;
+                const size = Math.random() * 40 + 15;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const points = [];
+                const numPoints = Math.floor(Math.random() * 4) + 5;
+                for(let j=0; j < numPoints; j++) {
+                    const angle = (j / numPoints) * 2 * Math.PI;
+                    const radiusVariation = Math.random() * 0.4 + 0.8;
+                    const x = 50 + Math.cos(angle) * 50 * radiusVariation;
+                    const y = 50 + Math.sin(angle) * 50 * radiusVariation;
+                    points.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+                }
+                particle.style.clipPath = `polygon(${points.join(', ')})`;
+                overlay.appendChild(particle);
+                const angle = Math.random() * 360;
+                const distance = Math.random() * (Math.max(window.innerWidth, window.innerHeight) * 0.7) + (Math.max(window.innerWidth, window.innerHeight) * 0.3);
+                const translateX = Math.cos(angle * Math.PI / 180) * distance;
+                const translateY = Math.sin(angle * Math.PI / 180) * distance;
+                const scaleFactor = Math.random() * 4 + 3;
+                const rotation = Math.random() * 720 - 360;
+                particle.animate([
+                    { transform: `translate(-50%, -50%) scale(0) rotate(0deg)`, opacity: 1, offset: 0 },
+                    { transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleFactor}) rotate(${rotation}deg)`, opacity: 1, offset: 0.7 },
+                    { transform: `translate(calc(-50% + ${translateX*1.2}px), calc(-50% + ${translateY*1.2}px)) scale(${scaleFactor*1.2}) rotate(${rotation + 90}deg)`, opacity: 0, offset: 1 }
+                ], { duration: EXPLOSION_DURATION - 200 + Math.random() * 400, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', fill: 'forwards' });
+            }
+            setTimeout(() => { overlay.style.display = 'none'; if (callback) callback(); }, EXPLOSION_DURATION);
+        }
+
+        // --- Results & Retry Logic ---
+        function showQuizResults(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const currentQuestions = data.questions;
+            const originalTotalMCQs = data.originalQuestions.length;
+            const mcqsInThisAttempt = currentQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            const timerDisplaySpan = getElement(quizId, 'timer');
+
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'hidden';
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) return;
+
+            optionsContainer.innerHTML = '';
+            feedbackContainer.style.display = 'none';
+            nextButton.style.display = 'none';
+            questionContainer.innerHTML = '';
+
+            const percentage = mcqsInThisAttempt > 0 ? ((state.score / mcqsInThisAttempt) * 100).toFixed(1) : 'N/A';
+            const scoreText = mcqsInThisAttempt > 0 ? `Score: ${state.score}/${mcqsInThisAttempt} (${percentage}%) on this attempt.` : 'Quiz complete (No MCQs in this set).';
+
+            const stats = getQuizStats(quizId);
+
+            const elapsedSeconds = state.elapsedSeconds || 0;
+            const attemptPercent = mcqsInThisAttempt > 0 ? (state.score / mcqsInThisAttempt) * 100 : null;
+
+            const updatedStats = {
+                ...stats,
+                attempts: stats.attempts + 1,
+                lastScore: mcqsInThisAttempt > 0 ? state.score : null,
+                lastTotal: mcqsInThisAttempt > 0 ? mcqsInThisAttempt : null,
+                lastPercent: attemptPercent,
+                totalTimeSeconds: stats.totalTimeSeconds + elapsedSeconds,
+                lastPlayedAt: Date.now(),
+                practiceRuns: stats.practiceRuns + (state.sessionMode === 'practice' ? 1 : 0)
+            };
+
+            const bestPercent = (mcqsInThisAttempt > 0) ? (state.score / mcqsInThisAttempt) * 100 : null;
+            if (bestPercent != null && (stats.bestPercent == null || bestPercent > stats.bestPercent)) {
+                updatedStats.bestPercent = bestPercent;
+                updatedStats.bestScore = state.score;
+                updatedStats.bestTotal = mcqsInThisAttempt;
+            }
+
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                updatedStats.perfectRuns = stats.perfectRuns + 1;
+            }
+
+            saveQuizStats(quizId, updatedStats);
+            updateQuizMetricsUI(quizId, updatedStats);
+            state.elapsedSeconds = 0;
+
+            const isFullOriginalAttempt = currentQuestions.length === originalTotalMCQs && originalTotalMCQs > 0;
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                 if (data.state) data.state.completedPerfectly = true;
+                 localStorage.setItem(`quiz_${quizId}_completed`, 'true');
+            }
+
+            const attemptMeta = [];
+            if (elapsedSeconds > 0) attemptMeta.push(`<strong>Time spent:</strong> ${formatDuration(elapsedSeconds)}`);
+            attemptMeta.push(`<strong>Mode:</strong> ${state.sessionMode === 'practice' ? 'Practice' : 'Timed'}`);
+            if (updatedStats.attempts > 1 && updatedStats.bestPercent != null) {
+                attemptMeta.push(`<strong>Best run:</strong> ${formatScoreValue(updatedStats.bestScore, updatedStats.bestTotal, updatedStats.bestPercent)}`);
+            }
+            const resultsMetaHtml = attemptMeta.length ? `<div class="results-meta">${attemptMeta.join(' • ')}</div>` : '';
+
+            const reviewHtml = buildIncorrectReview(quizId);
+
+            let buttonsHTML = '<div class="results-buttons">';
+            const currentAttemptWasPerfect = mcqsInThisAttempt > 0 && state.score === mcqsInThisAttempt && state.incorrectQuestions.length === 0;
+            if (currentAttemptWasPerfect) {
+                buttonsHTML += `<button class="celebrate-button" onclick="startConfetti(this)">Celebrate This Round!</button>`;
+            }
+
+            const incorrectToRetry = state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+            if (incorrectToRetry.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryIncorrectQuiz('${quizId}')">Retry Incorrect (${incorrectToRetry.length})</button>`;
+            }
+            if (data.originalQuestions && data.originalQuestions.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryWholeQuiz('${quizId}')">Retry Full Quiz</button>`;
+            }
+
+            buttonsHTML += `<button class="back-button" onclick="showHubPage()">Back to Hub</button></div>`;
+            questionContainer.innerHTML = `<div style="text-align:center;"><h2 style="font-size:1.5em;margin-bottom:15px;">Quiz Completed!</h2><p class="results-text">${scoreText}</p>${resultsMetaHtml}${buttonsHTML}${reviewHtml}</div>`;
+             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset results page
+                MathJax.typesetPromise([questionContainer]);
+            }
+            localStorage.removeItem(`quizState_${quizId}`); // Clear progress on completion
+            checkOverallCompletion();
+        }
+
+       function retryIncorrectQuiz(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.state.incorrectQuestions) {
+                alert("Nothing to retry or data error!");
+                return;
+            }
+
+            const incorrectMCQsToRetry = data.state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+
+            if (incorrectMCQsToRetry.length === 0) {
+                alert("No incorrect MCQs to retry from the last attempt.");
+                return;
+            }
+
+            const wasOriginalQuizPerfected = data.state.completedPerfectly;
+            const originalMcqCount = data.state.mcqCount;
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: originalMcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: JSON.parse(JSON.stringify(incorrectMCQsToRetry)),
+                practiceMode: data.state.practiceMode,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: data.state.practiceMode ? 'practice' : 'timed'
+            };
+            
+            saveQuizState(quizId); // Save the new "retry" state
+            showQuizPage(quizId); // Start the quiz with the incorrect questions
+        }
+        
+        // --- NEW: Update Hub UI based on saved states ---
+        function updateHubUI() {
+            for (const quizId in quizData) {
+                const card = document.getElementById(`${quizId}-card`);
+                if (!card) continue;
+                
+                const startButton = card.querySelector('.quiz-button');
+                const retryButton = card.querySelector('.retry-quiz-button');
+                const checkmark = card.querySelector('.completion-checkmark');
+
+                const savedState = loadQuizState(quizId);
+                const isCompleted = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+                if (isCompleted) {
+                    checkmark.classList.add('visible');
+                    startButton.textContent = 'Retake Quiz';
+                    startButton.style.display = 'block';
+                    retryButton.style.display = 'none';
+                } else if (savedState && savedState.currentQuestion > 0) {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = `Continue Quiz (Q${savedState.currentQuestion + 1})`;
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'block';
+                } else {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = 'Start Quiz';
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'none';
+                }
+
+                updateQuizMetricsUI(quizId);
+            }
+        }
+
+
+        // --- Overall Completion & Confetti ---
+        function checkOverallCompletion() {
+            let allQuizzesPerfected = true;
+            let atLeastOneQuizWithMcqsExists = false;
+
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                const originalMcqsInThisQuiz = quiz.originalQuestions ? quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length : 0;
+
+                if (originalMcqsInThisQuiz > 0) {
+                    atLeastOneQuizWithMcqsExists = true;
+                    // Check local storage directly for completion status
+                    if (localStorage.getItem(`quiz_${quizId}_completed`) !== 'true') {
+                        allQuizzesPerfected = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allQuizzesPerfected && atLeastOneQuizWithMcqsExists) {
+                setTimeout(showCelebrationPage, 1500);
+            }
+        }
+
+        function startConfetti(buttonElement = null) {
+            if (typeof confetti !== 'function') { console.error("Confetti lib not loaded."); return; }
+            let confettiOrigin = { y: 0.6 };
+            if (buttonElement && typeof buttonElement.getBoundingClientRect === 'function') {
+                try {
+                    const rect = buttonElement.getBoundingClientRect();
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    confettiOrigin = {
+                        x: Math.max(0, Math.min(1, (rect.left + rect.width / 2) / vw)),
+                        y: Math.max(0, Math.min(1, (rect.top + rect.height / 2) / vh))
+                    };
+                } catch (e) { console.error("Error calculating confetti origin:", e); }
+            } else if (buttonElement && buttonElement.id === 'celebration-page') {
+                confettiOrigin = { x: 0.5, y: 0.1 };
+            }
+
+            const newConfettiColors = [
+                '#8B0000', '#DC143C', '#00008B', '#4169E1', '#800080', '#9370DB',
+                '#FF00FF', '#C71585', '#FFD700', '#DAA520', '#008080', '#20B2AA',
+                '#00CED1', '#48D1CC', '#FFC0CB', '#FFFFFF'
+            ];
+
+
+            const confettiSettings = {
+                particleCount: 250,
+                spread: 120,
+                origin: confettiOrigin,
+                colors: newConfettiColors,
+                scalar: 1.1,
+                drift: 0.5
+            };
+
+            if (buttonElement && buttonElement.id === 'celebration-page') {
+                confetti(confettiSettings);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.2, y:0.15}, spread: 80, particleCount: 100}), 300);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.8, y:0.15}, spread: 80, particleCount: 100}), 600);
+            } else {
+                confetti(confettiSettings);
+            }
+        }
+
+
+        // --- Initialization ---
+        function initializeQuizData() {
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                if (!quiz.originalQuestions) quiz.originalQuestions = [];
+                const mcqCount = quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+                // Set initial state structure, but don't overwrite if loaded from storage later
+                const initialState = {
+                    currentQuestion: 0,
+                    score: 0,
+                    mcqCount: mcqCount,
+                    incorrectQuestions: [],
+                    timerIntervalId: null,
+                    timeRemaining: QUESTION_TIME_LIMIT,
+                    completedPerfectly: localStorage.getItem(`quiz_${quizId}_completed`) === 'true',
+                    questions: [...quiz.originalQuestions]
+                };
+
+                quiz.state = initialState;
+
+                const timerDisplay = document.getElementById(`${quizId}-timer`);
+                if (timerDisplay) {
+                    timerDisplay.textContent = QUESTION_TIME_LIMIT;
+                }
+            }
+
+            updateHubUI(); // Update UI on first load
+
+            const hubPage = document.getElementById('quiz-selection-page');
+            if (hubPage) {
+                hubPage.style.display='block';
+                hubPage.style.opacity='1';
+                hubPage.classList.add('active-page');
+                hubPage.style.position='relative';
+                hubPage.style.zIndex=1;
+                hubPage.style.transform = 'scale(1)';
+                hubPage.style.filter = 'blur(0px)';
+            }
+            document.querySelectorAll('.page-section').forEach(page => {
+                if(page.id !== 'quiz-selection-page') {
+                    page.style.display='none';
+                    page.style.opacity='0';
+                    page.style.position='absolute';
+                    page.classList.remove('active-page');
+                    page.style.transform='scale(1)';
+                    page.style.filter = 'blur(0px)';
+                }
+            });
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+        document.addEventListener('keydown', handleOptionNavigation);
+        document.addEventListener('DOMContentLoaded', initializeQuizData);
+    </script>
+</body>
+</html>

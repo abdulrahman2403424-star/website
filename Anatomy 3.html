@@ -1,0 +1,2520 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anatomy Quiz Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        :root {
+            --layout-max-width: min(1100px, 92vw);
+            --page-padding: clamp(1rem, 4vw, 2.75rem);
+            --card-radius: 20px;
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        @media (max-width: 640px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.85rem, 5vw, 1.9rem);
+                --card-radius: 18px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            :root {
+                --page-padding: clamp(0.7rem, 6vw, 1.4rem);
+                --card-radius: 16px;
+            }
+        }
+        /* Keyframes for the hover animation */
+        @keyframes splash-animation {
+          0% {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0.5;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(3.5);
+            opacity: 0;
+          }
+        }
+
+        /* --- BASE DARK THEME STYLES --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-color: #111827; /* Dark Blue/Gray Base */
+            color: #D1D5DB; /* Light Gray Text */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            position: relative; /* Needed for absolutely positioned children */
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        /* --- Page Section Base Styles --- */
+        .page-section {
+            display: none; /* Initially hidden, JS controls display */
+            opacity: 0; /* Start fully transparent */
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            box-sizing: border-box;
+            padding: var(--page-padding) clamp(0.75rem, 4vw, 3rem) calc(var(--page-padding) + 1.5rem);
+            position: absolute; /* Position absolutely for overlap during transition */
+            top: 0;
+            left: 0;
+            will-change: opacity, transform, filter; /* Hint for browser optimization, added filter */
+            background-color: inherit; /* Inherit body background or set specific page background */
+            transform: scale(1); /* Base transform state */
+        }
+        .page-section.active-page {
+             position: relative; /* Take up space in the document flow when active */
+             z-index: 1; /* Ensure active page is on top */
+        }
+
+        /* Common Quiz Page Structure Styles */
+        .page-section .header {
+            color: white;
+            --header-inline-padding: clamp(1rem, 4vw, 2.25rem);
+            padding: clamp(1rem, 3vw, 1.75rem) var(--header-inline-padding);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin: 0 auto clamp(0.75rem, 2vw, 1.5rem);
+            position: relative; /* Needed for timer positioning */
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, var(--layout-max-width));
+            border-radius: var(--card-radius);
+        }
+        .page-section .header h1 {
+            margin-bottom: 15px; /* Space for timer */
+            font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+            margin: 0;
+            flex: 1 1 100%;
+            text-align: center;
+        }
+
+        .page-section .header-top {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: clamp(0.75rem, 2vw, 1.25rem);
+            width: 100%;
+        }
+
+        .page-section .header-controls {
+            display: flex;
+            align-items: center;
+            gap: clamp(0.65rem, 2vw, 1.25rem);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-container {
+            font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+            font-weight: 500;
+            color: #ffffff;
+            background-color: rgba(0,0,0,0.32);
+            padding: 6px 12px;
+            border-radius: 10px;
+            transition: color 0.3s, transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .timer-display {
+            font-weight: 700;
+        }
+
+        .timer-label {
+            font-weight: 500;
+        }
+
+        .timer-unit {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .timer-container.practice-mode {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+        }
+
+        .timer-container.low-time {
+            color: #EF4444; /* Red text for low time */
+            animation: pulseLowTime 0.8s infinite alternate;
+        }
+
+        @keyframes pulseLowTime {
+            from {
+                transform: scale(1);
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0);
+            }
+            to {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+            }
+        }
+
+        .mode-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.95em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .mode-toggle input {
+            appearance: none;
+            width: 36px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.45);
+            position: relative;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .mode-toggle input::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            transition: transform 0.3s ease;
+        }
+
+        .mode-toggle input:checked {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.6), rgba(5, 150, 105, 0.6));
+        }
+
+        .mode-toggle input:checked::after {
+            transform: translateX(18px);
+        }
+
+        .mode-toggle span.toggle-label {
+            font-weight: 500;
+            color: #d1fae5;
+        }
+
+        .question-progress {
+            font-size: 0.95em;
+            color: #9CA3AF;
+            text-align: center;
+            margin-bottom: 12px;
+            letter-spacing: 0.01em;
+        }
+
+        .question-progress.practice-mode {
+            color: #6ee7b7;
+        }
+
+        .quiz-card .quiz-metrics {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            text-align: left;
+            font-size: 0.95rem;
+            display: grid;
+            gap: 0.6rem;
+        }
+
+        .quiz-card .quiz-metrics h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .quiz-card .metric-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            color: #cbd5f5;
+        }
+
+        .quiz-card .metric-row span.value {
+            font-weight: 600;
+            color: #fbbf24;
+        }
+
+        .quiz-card .metric-row span.label {
+            color: #9ca3af;
+        }
+
+        .results-meta {
+            font-size: 0.95em;
+            color: #9ca3af;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .results-meta strong {
+            color: #f3f4f6;
+        }
+
+        .results-accordion {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .results-accordion h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: #f3f4f6;
+        }
+
+        .results-accordion details {
+            background: rgba(17, 24, 39, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .results-accordion summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #e0f2fe;
+            list-style: none;
+        }
+
+        .results-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .results-accordion details[open] {
+            border-color: rgba(59, 130, 246, 0.35);
+            background: rgba(30, 58, 138, 0.4);
+        }
+
+        .results-accordion .review-body {
+            margin-top: 0.75rem;
+            color: #cbd5f5;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .results-accordion .review-body strong {
+            color: #fde68a;
+        }
+
+        .results-accordion .explanation {
+            margin-top: 0.75rem;
+        }
+
+
+        #explosion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: none;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .explosion-particle {
+            position: absolute;
+            transform-origin: center center;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 1;
+            pointer-events: none;
+        }
+        .full-screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            z-index: 10001;
+            pointer-events: none;
+            animation: screenFlash 0.4s ease-out forwards;
+        }
+        @keyframes screenFlash {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        .page-section .progress-bar-container {
+            padding: 3px;
+            border-radius: 10px;
+            margin: 0 auto 10px;
+            background-color: rgba(255, 255, 255, 0.12);
+            width: calc(100% + 2 * var(--header-inline-padding, 0px));
+            margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+            max-width: none;
+        }
+        .page-section .progress-bar {
+            height: 10px;
+            border-radius: 6px;
+            transition: width 0.4s ease-in-out;
+            width: 0%;
+            background: linear-gradient(90deg, #ffffff, #6366f1); /* Default color */
+        }
+        .page-section .quiz-container {
+            width: min(100%, var(--layout-max-width));
+            max-width: 840px;
+            margin: clamp(1.5rem, 4vw, 2.75rem) auto;
+            padding: clamp(1.5rem, 4vw, 2.5rem);
+            background: #1F2937; /* Default container background for hub */
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            color: #E5E7EB;
+            position: relative;
+            display: grid;
+            gap: clamp(1rem, 2.5vw, 1.75rem);
+        }
+
+        .page-section .options {
+            display: grid;
+            gap: clamp(0.75rem, 2vw, 1.1rem);
+            width: min(100%, 680px);
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .page-section .options {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+        }
+        .page-section .question {
+            font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+            margin: 0 auto 25px;
+            min-height: 50px;
+            text-align: center;
+            font-weight: 500;
+            color: #ffffff;
+            width: min(100%, 680px);
+        }
+        .page-section .results-text {
+            font-size: clamp(1rem, 2.2vw, 1.2rem);
+            margin-bottom: 25px;
+            color: #E5E7EB;
+        }
+        .page-section .results-buttons {
+             text-align: center;
+             margin-top: 20px;
+        }
+
+        .page-section .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            color: white;
+            text-align: center;
+            font-size: 0.95em;
+        }
+        .page-section .feedback.correct {
+            background: linear-gradient(135deg, #10B981, #059669); /* Emerald Green */
+        }
+        .page-section .feedback.incorrect {
+            background: linear-gradient(135deg, #EF4444, #DC2626); /* Red */
+        }
+        .page-section .feedback.timeup {
+            background: linear-gradient(135deg, #F59E0B, #D97706); /* Amber */
+        }
+
+        .page-section .links {
+            text-align: center;
+            margin: 30px auto 20px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            width: min(100%, var(--layout-max-width));
+        }
+        .page-section .links a {
+            color: #9CA3AF; /* Default link color */
+            text-decoration: none;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+         .page-section .links a:hover {
+             color: #E5E7EB; /* Default link hover color */
+         }
+         .page-section .links a i {
+             font-size: 1.3em;
+         }
+
+        /* --- Hub/Selection Page Styles --- */
+       #quiz-selection-page {
+           background: #111827; /* Main hub background */
+           color: #D1D5DB;
+           padding: var(--page-padding);
+           padding-bottom: calc(var(--page-padding) + 1.5rem);
+       }
+        #quiz-selection-page .hub-header {
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d); /* Anatomy Red Gradient */
+            padding: clamp(1.5rem, 3vw, 2.4rem);
+            border-radius: var(--card-radius);
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(185, 28, 28, 0.3);
+            margin: 0 auto clamp(1.5rem, 4vw, 3rem);
+            width: min(100%, var(--layout-max-width));
+            transition: transform 0.3s ease;
+            color: white;
+        }
+        #quiz-selection-page .hub-header:hover { transform: translateY(-5px); }
+    #quiz-selection-page .hub-header h1 { margin: 0; font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 700; }
+        #quiz-selection-page .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(1.35rem, 3vw, 2.5rem);
+            width: min(100%, var(--layout-max-width));
+            margin: 0 auto;
+        }
+
+        #quiz-selection-page .quiz-card {
+            background: rgba(55, 65, 81, 0.35); /* Glassy background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* Safari support */
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: clamp(1.25rem, 3vw, 2rem);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* For positioning the animation */
+            overflow: hidden; /* To contain the animation */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.85rem, 2vw, 1.25rem);
+        }
+
+        #quiz-selection-page .quiz-card > * {
+            position: relative;
+            z-index: 2; /* Ensure card content is above the animation */
+        }
+
+        #quiz-selection-page .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none; /* Let clicks pass through */
+            z-index: 1;
+        }
+
+        #quiz-selection-page .quiz-card:hover::before {
+            animation: splash-animation 0.7s ease-out;
+        }
+
+        #quiz-selection-page .quiz-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(185, 28, 28, 0.25);
+        }
+        #quiz-selection-page .quiz-card h2 {
+            font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+            font-weight: 500;
+        }
+        #quiz-selection-page .quiz-card h2::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #ef4444, #b91c1c); /* Match hub header gradient */
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- NEW: Generic Glass Button Style --- */
+        .quiz-button,
+        .retry-quiz-button,
+        .page-section .options button,
+        .page-section .next-button,
+        .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: #E5E7EB;
+
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: all 0.3s ease;
+
+            padding: 1rem;
+            margin: 8px 0;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+        }
+
+        .retry-quiz-button {
+             margin-top: 10px;
+             background-color: rgba(245, 158, 11, 0.2); /* Amber tint */
+             border-color: rgba(252, 211, 77, 0.4);
+        }
+        
+        .completion-checkmark {
+            color: #34D399; /* Emerald Green */
+            font-size: 1.5rem;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease-in-out;
+            z-index: 3; /* Ensure it's on top */
+        }
+
+        .completion-checkmark.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* Previous Button Styling for centering */
+        .page-section .prev-button {
+            width: auto;
+            display: inline-block;
+            margin: 5px auto;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            opacity: 0.9;
+            border-radius: 50px;
+        }
+         .page-section .retry-button,
+        .page-section .back-button,
+        .page-section .celebrate-button {
+             display: inline-block;
+             width: auto;
+             margin: 10px;
+             padding: 12px 25px;
+             border-radius: 50px;
+             font-size: 0.95rem;
+        }
+
+        .quiz-button > *,
+        .retry-quiz-button > *,
+        .page-section .options button > *,
+        .page-section .next-button > *,
+        .page-section .retry-button > *,
+        .page-section .back-button > *,
+        .page-section .celebrate-button > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .quiz-button::before,
+        .retry-quiz-button::before,
+        .page-section .options button::before,
+        .page-section .next-button::before,
+        .page-section .retry-button::before,
+        .page-section .back-button::before,
+        .page-section .celebrate-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .quiz-button:hover::before,
+        .retry-quiz-button:hover::before,
+        .page-section .options button:hover:not(:disabled)::before,
+        .page-section .next-button:hover::before,
+        .page-section .retry-button:hover::before,
+        .page-section .back-button:hover::before,
+        .page-section .celebrate-button:hover::before {
+            animation: splash-animation 0.6s ease-out;
+        }
+
+        .quiz-button:hover,
+        .retry-quiz-button:hover,
+        .page-section .options button:hover:not(:disabled),
+        .page-section .next-button:hover,
+        .page-section .retry-button:hover,
+        .page-section .back-button:hover,
+        .page-section .celebrate-button:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .page-section .options button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        .page-section .options button:disabled {
+            opacity: 0.8;
+            cursor: default;
+        }
+
+        /* --- THEMED BUTTONS --- */
+        #quiz-selection-page .lecture-1-button  { background: linear-gradient(145deg, rgba(185, 28, 28, 0.45), rgba(153, 27, 27, 0.55)); }
+       
+        .explanation {
+             font-size: 0.9em;
+             margin-top: 10px;
+             padding: 8px;
+             background-color: rgba(255, 255, 255, 0.05);
+             border-radius: 5px;
+             line-height: 1.4;
+             text-align: left;
+             color: #D1D5DB;
+        }
+        .explanation strong { color: #ffffff; }
+
+        /* --- QUIZ SPECIFIC COLOR OVERRIDES --- */
+    #lecture-1-card { background: rgba(185, 28, 28, 0.35); box-shadow: 0 8px 25px rgba(185, 28, 28, 0.25); }
+    #lecture-1-card .quiz-button { background: linear-gradient(145deg, rgba(185, 28, 28, 0.7), rgba(153, 27, 27, 0.7)); border-color: rgba(252, 165, 165, 0.55); }
+    #lecture-1-card .retry-quiz-button { background: rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.45); }
+    #lecture-1-quiz-page { background-color: #7F1D1D; }
+    #lecture-1-quiz-page .header { background: linear-gradient(135deg, #B91C1C, #991B1B); }
+    #lecture-1-quiz-page .progress-bar { background: linear-gradient(90deg, #FCA5A5, #B91C1C); }
+    #lecture-1-quiz-page .links a { color: #FEE2E2; }
+    #lecture-1-quiz-page .links a:hover { color: #FFF1F2; }
+    #lecture-1-quiz-page .quiz-button,
+    #lecture-1-quiz-page .options button,
+    #lecture-1-quiz-page .next-button,
+    #lecture-1-quiz-page .retry-button,
+    #lecture-1-quiz-page .celebrate-button,
+    #lecture-1-quiz-page .back-button { background: rgba(185, 28, 28, 0.25); border-color: rgba(252, 165, 165, 0.3); }
+
+    #lecture-2-card { background: rgba(30, 64, 175, 0.35); box-shadow: 0 8px 25px rgba(30, 64, 175, 0.25); }
+    #lecture-2-card .quiz-button { background: linear-gradient(145deg, rgba(59, 130, 246, 0.7), rgba(37, 99, 235, 0.7)); border-color: rgba(191, 219, 254, 0.55); }
+    #lecture-2-card .retry-quiz-button { background: rgba(56, 189, 248, 0.2); border-color: rgba(191, 219, 254, 0.45); }
+    #lecture-2-quiz-page { background-color: #1E3A8A; }
+    #lecture-2-quiz-page .header { background: linear-gradient(135deg, #2563EB, #1D4ED8); }
+    #lecture-2-quiz-page .progress-bar { background: linear-gradient(90deg, #93C5FD, #2563EB); }
+    #lecture-2-quiz-page .links a { color: #DBEAFE; }
+    #lecture-2-quiz-page .links a:hover { color: #EFF6FF; }
+    #lecture-2-quiz-page .quiz-button,
+    #lecture-2-quiz-page .options button,
+    #lecture-2-quiz-page .next-button,
+    #lecture-2-quiz-page .retry-button,
+    #lecture-2-quiz-page .celebrate-button,
+    #lecture-2-quiz-page .back-button { background: rgba(37, 99, 235, 0.25); border-color: rgba(191, 219, 254, 0.35); }
+
+    #lecture-3-card { background: rgba(22, 101, 52, 0.35); box-shadow: 0 8px 25px rgba(22, 101, 52, 0.25); }
+    #lecture-3-card .quiz-button { background: linear-gradient(145deg, rgba(34, 197, 94, 0.7), rgba(5, 150, 105, 0.7)); border-color: rgba(134, 239, 172, 0.55); }
+    #lecture-3-card .retry-quiz-button { background: rgba(16, 185, 129, 0.25); border-color: rgba(134, 239, 172, 0.45); }
+    #lecture-3-quiz-page { background-color: #065F46; }
+    #lecture-3-quiz-page .header { background: linear-gradient(135deg, #059669, #047857); }
+    #lecture-3-quiz-page .progress-bar { background: linear-gradient(90deg, #6EE7B7, #059669); }
+    #lecture-3-quiz-page .links a { color: #D1FAE5; }
+    #lecture-3-quiz-page .links a:hover { color: #ECFDF5; }
+    #lecture-3-quiz-page .quiz-button,
+    #lecture-3-quiz-page .options button,
+    #lecture-3-quiz-page .next-button,
+    #lecture-3-quiz-page .retry-button,
+    #lecture-3-quiz-page .celebrate-button,
+    #lecture-3-quiz-page .back-button { background: rgba(5, 150, 105, 0.25); border-color: rgba(134, 239, 172, 0.35); }
+
+        /* --- Styles for Celebration Page --- */
+        #celebration-page {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1F2937, #111827);
+            color: #f7fafc;
+            text-align: center;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(2.5rem, 6vw, 4rem);
+            overflow: hidden;
+            gap: clamp(1.5rem, 4vw, 2.5rem);
+        }
+         #celebration-page h1 {
+             font-size: clamp(2.4rem, 5vw, 3.5rem);
+             font-weight: 700;
+             margin-bottom: 0;
+             color: #34D399;
+             text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+         }
+         #celebration-page p {
+             font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+             margin-bottom: 0;
+             color: #E5E7EB;
+         }
+         #celebration-page .back-button {
+             padding: 14px 35px;
+             border-radius: 50px;
+             font-size: 1.2em;
+             margin: 0;
+         }
+
+    /* Responsive adjustments */
+         @media (max-width: 768px) {
+                         #quiz-selection-page { padding: clamp(1rem, 6vw, 1.5rem); }
+                         #quiz-selection-page .hub-header { padding: clamp(1.1rem, 4.5vw, 1.65rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.4rem; width: 100%; }
+                         #quiz-selection-page .quiz-card { padding: clamp(1.15rem, 4.5vw, 1.55rem); }
+                         .page-section .header {
+                             --header-inline-padding: clamp(0.9rem, 4.5vw, 1.35rem);
+                             padding: clamp(0.9rem, 4.5vw, 1.35rem) var(--header-inline-padding);
+                             gap: clamp(0.6rem, 3.5vw, 0.9rem);
+                             width: min(94vw, 520px);
+                             margin-left: auto;
+                             margin-right: auto;
+                         }
+                         .page-section .header-top { flex-direction: column; align-items: stretch; gap: clamp(0.55rem, 3vw, 0.85rem); }
+                         .page-section .header-controls { width: 100%; flex-direction: column; align-items: stretch; gap: clamp(0.6rem, 3.2vw, 0.9rem); }
+                         .page-section .header h1 { font-size: clamp(1.32rem, 3.5vw, 1.55rem); text-align: center; }
+                         .page-section .header-controls > * { width: min(100%, 360px); margin-left: auto; margin-right: auto; }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                         }
+                         .page-section .quiz-container { margin: clamp(1rem, 5vw, 1.45rem) auto; padding: clamp(1.05rem, 4.5vw, 1.55rem); border-radius: 14px; width: min(94vw, 520px); }
+                         .page-section .options { grid-template-columns: 1fr; width: 100%; }
+                         .page-section .question { font-size: clamp(1.05rem, 4vw, 1.35rem); }
+                         .page-section .options button { font-size: 0.95rem; padding: clamp(0.85rem, 3.4vw, 0.95rem); }
+                         .page-section .next-button { padding: clamp(0.8rem, 3.4vw, 0.95rem); font-size: 0.95rem; }
+                         .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: clamp(0.7rem, 3.2vw, 0.9rem) clamp(1.1rem, 4vw, 1.4rem); font-size: 0.9rem; }
+                         .explanation { font-size: 0.85em; }
+                         .timer-container { font-size: 0.95rem; padding: clamp(0.45rem, 2.8vw, 0.6rem) clamp(0.55rem, 3vw, 0.7rem); justify-content: space-between; max-width: 360px; }
+                         .mode-toggle { width: min(100%, 360px); justify-content: space-between; font-size: 0.9rem; padding: clamp(0.5rem, 3.2vw, 0.65rem) clamp(0.8rem, 3.5vw, 1rem); margin-left: auto; margin-right: auto; }
+                         .mode-toggle input { width: clamp(2rem, 8.5vw, 2.3rem); height: clamp(0.9rem, 4vw, 1.1rem); }
+                         .mode-toggle input::after { width: clamp(0.65rem, 3.2vw, 0.85rem); height: clamp(0.65rem, 3.2vw, 0.85rem); }
+                         #celebration-page h1 { font-size: clamp(2.2rem, 6vw, 2.8rem); }
+                         #celebration-page p { font-size: clamp(1.1rem, 4vw, 1.3rem); }
+                         #celebration-page .back-button { font-size: 1.05rem; padding: 12px 30px; }
+                }
+         @media (max-width: 640px) {
+                         .page-section { padding-inline: clamp(0.6rem, 4.5vw, 1rem); padding-top: clamp(0.6rem, 5vw, 1.2rem); padding-bottom: clamp(0.9rem, 6vw, 1.9rem); }
+                         .page-section .header { margin: 0 auto clamp(0.45rem, 5vw, 0.85rem); width: min(92vw, 420px); }
+                         .page-section .quiz-container { padding: clamp(0.95rem, 5vw, 1.55rem); width: min(92vw, 420px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                         }
+                         .page-section .links { gap: clamp(0.7rem, 4vw, 1rem); flex-wrap: wrap; }
+                         .page-section .links a { font-size: clamp(0.92rem, 3.4vw, 1.02rem); }
+                         .page-section .header-controls > * { width: min(100%, 320px); }
+                         .timer-container { max-width: 320px; }
+                         .mode-toggle { max-width: 320px; }
+                         #quiz-selection-page { padding: clamp(0.45rem, 4.5vw, 0.85rem); }
+                         #quiz-selection-page .hub-header { width: min(92vw, 420px); padding: clamp(0.45rem, 3.5vw, 0.85rem) clamp(0.6rem, 4vw, 1rem); margin: 0 auto clamp(0.65rem, 4.5vw, 1.1rem); border-radius: clamp(10px, 3.8vw, 14px); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.1rem, 4.6vw, 1.4rem); letter-spacing: 0.01em; line-height: 1.15; }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: clamp(1rem, 4.6vw, 1.4rem); justify-content: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.95rem, 5vw, 1.4rem); border-radius: clamp(16px, 4.5vw, 20px); }
+                         #quiz-selection-page .quiz-button { font-size: clamp(0.95rem, 3.8vw, 1rem); padding: clamp(0.75rem, 3.8vw, 0.95rem); }
+    }
+         @media (max-width: 480px) {
+                         #quiz-selection-page { padding: clamp(0.3rem, 6vw, 0.65rem); }
+                         #quiz-selection-page .hub-header { width: min(90vw, 360px); padding: clamp(0.4rem, 5.5vw, 0.75rem) clamp(0.55rem, 6vw, 0.9rem); border-radius: clamp(10px, 5vw, 14px); margin: 0 auto clamp(0.55rem, 6vw, 0.95rem); box-shadow: 0 3px 12px rgba(185, 28, 28, 0.16); }
+                         #quiz-selection-page .hub-header h1 { font-size: clamp(1.05rem, 5.8vw, 1.35rem); }
+                         #quiz-selection-page .quiz-grid { grid-template-columns: 1fr; gap: clamp(0.8rem, 5vw, 1.1rem); justify-items: center; }
+                         #quiz-selection-page .quiz-card { padding: clamp(0.9rem, 6vw, 1.25rem); width: min(92vw, 370px); }
+                         .page-section .header-controls > * { width: min(100%, 300px); }
+                         .timer-container { max-width: 300px; }
+                         .mode-toggle { max-width: 300px; }
+                         .page-section .header { width: min(90vw, 360px); }
+                         .page-section .progress-bar-container {
+                             width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                             margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                         }
+                         .page-section .quiz-container { width: min(90vw, 360px); }
+                         #quiz-selection-page .quiz-card h2 { font-size: clamp(1.15rem, 6vw, 1.3rem); }
+                         #quiz-selection-page .quiz-button { font-size: 1rem; padding: 0.9rem; }
+             body { font-size: 14px; }
+             .page-section .header {
+                 --header-inline-padding: 15px;
+                 padding: 15px var(--header-inline-padding);
+             }
+             .page-section .header-top { align-items: stretch; }
+             .page-section .header-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+                         .page-section .header h1 { font-size: clamp(1.2rem, 6vw, 1.35rem); margin-bottom: 0; }
+             .timer-container { font-size: 0.9em; padding: 3px 6px; }
+                         .page-section .quiz-container { margin: 10px auto; padding: 15px; border-radius: 12px; }
+                         .page-section .options { width: 100%; }
+                         .page-section .question { font-size: 1.1em; margin-bottom: 15px; }
+             .page-section .options button { font-size: 0.9rem; padding: 12px; margin: 6px 0; }
+             .page-section .next-button { padding: 12px; font-size: 0.9rem; }
+             .page-section .retry-button, .page-section .back-button, .page-section .celebrate-button { padding: 10px 18px; font-size: 0.9rem; }
+             .page-section .links a { font-size: 1em; }
+             .explanation { font-size: 0.8em; }
+                        #celebration-page h1 { font-size: 2.2em; }
+                            #celebration-page p { font-size: 1.1em; }
+                            #celebration-page .back-button { font-size: 1em; padding: 10px 25px; }
+                        .quiz-card .quiz-metrics { padding: 0.9rem; }
+                        .page-section .header-controls { gap: clamp(0.6rem, 4vw, 0.9rem); }
+                        .page-section .timer-container { width: 100%; justify-content: center; }
+                        .page-section .mode-toggle { gap: clamp(0.45rem, 3vw, 0.6rem); }
+        }
+
+        @media (max-width: 430px) and (max-height: 940px) {
+            :root {
+                --layout-max-width: 100%;
+                --page-padding: clamp(0.45rem, 5vw, 0.85rem);
+            }
+            body { font-size: 14px; }
+            .page-section {
+                padding: clamp(0.45rem, 5vw, 0.85rem) clamp(0.5rem, 6vw, 0.9rem) clamp(0.8rem, 6vw, 1.2rem);
+            }
+            .page-section .header,
+            .page-section .progress-bar-container,
+            .page-section .quiz-container {
+                width: 100%;
+                max-width: 350px;
+            }
+            .page-section .header {
+                --header-inline-padding: clamp(0.75rem, 5vw, 1rem);
+                padding: clamp(0.75rem, 5vw, 1rem) var(--header-inline-padding);
+            }
+            .page-section .quiz-container { padding: clamp(0.85rem, 5vw, 1.2rem); margin: clamp(0.75rem, 5vw, 1.2rem) auto; }
+            .page-section .header-controls > * { width: 100%; }
+            .timer-container,
+            .mode-toggle { max-width: 100%; }
+            #quiz-selection-page .hub-header,
+            #quiz-selection-page .quiz-card { width: 100%; max-width: 350px; }
+            #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 5vw, 1.15rem); }
+            .page-section .question { font-size: clamp(1rem, 5.4vw, 1.2rem); }
+            .page-section .options button { padding: clamp(0.75rem, 5vw, 0.95rem); font-size: 0.95rem; }
+            .page-section .next-button,
+            .page-section .retry-button,
+            .page-section .back-button,
+            .page-section .celebrate-button { padding: clamp(0.7rem, 5vw, 0.9rem) clamp(1rem, 6vw, 1.4rem); font-size: 0.95rem; }
+        }
+
+                @media (max-width: 360px) {
+                        .page-section .header h1 { font-size: clamp(1.1rem, 7vw, 1.3rem); }
+                        .page-section .question { font-size: clamp(1rem, 5.8vw, 1.2rem); }
+                        .page-section .options button { font-size: 0.85rem; padding: 11px; }
+                    .page-section .timer-container { font-size: 0.83rem; padding: 4px 6px; }
+                    .page-section .links a { font-size: 0.92rem; }
+                    #quiz-selection-page { padding: clamp(0.25rem, 6vw, 0.5rem); }
+                    #quiz-selection-page .hub-header { width: min(88vw, 320px); padding: clamp(0.35rem, 5.5vw, 0.7rem) clamp(0.5rem, 6vw, 0.8rem); margin: 0 auto clamp(0.45rem, 6vw, 0.75rem); }
+                    #quiz-selection-page .quiz-card { padding: clamp(0.85rem, 6vw, 1.1rem); width: 100%; max-width: 320px; }
+                    .page-section .header { width: min(88vw, 320px); }
+                    .page-section .progress-bar-container {
+                        width: calc(100% + 2 * var(--header-inline-padding, 0px));
+                        margin-inline: calc(-1 * var(--header-inline-padding, 0px));
+                    }
+                    .page-section .quiz-container { width: min(88vw, 320px); }
+                    .page-section .header-controls > * { width: min(100%, 280px); }
+                    .timer-container { max-width: 280px; }
+                    .mode-toggle { max-width: 280px; }
+                }
+
+    </style>
+</head>
+<body>
+    <div id="quiz-selection-page" class="page-section">
+        <div class="hub-header">
+             <h1>Anatomy Quiz Hub</h1>
+        </div>
+        <div class="quiz-grid">
+            <div id="lecture-1-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>Anatomy Lecture 1</h2>
+                <div class="quiz-metrics" id="lecture-1-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-1-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-1-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-1-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-1-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-1-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button lecture-1-button" onclick="showQuizPage('lecture-1')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-1')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-2-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>LEC 2 Thoracic &amp; Lumbar</h2>
+                <div class="quiz-metrics" id="lecture-2-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-2-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-2-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-2-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-2-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-2-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-2')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-2')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <div id="lecture-3-card" class="quiz-card">
+                <span class="completion-checkmark"><i class="fas fa-check-circle"></i></span>
+                <h2>LEC 3 Intercostals &amp; Diaphragm</h2>
+                <div class="quiz-metrics" id="lecture-3-metrics">
+                    <h3>Progress snapshot</h3>
+                    <div class="metric-row"><span class="label">Best score</span><span class="value" id="lecture-3-best-score">—</span></div>
+                    <div class="metric-row"><span class="label">Last attempt</span><span class="value" id="lecture-3-last-score">—</span></div>
+                    <div class="metric-row"><span class="label">Perfect runs</span><span class="value" id="lecture-3-perfect-runs">0</span></div>
+                    <div class="metric-row"><span class="label">Avg time</span><span class="value" id="lecture-3-average-time">—</span></div>
+                    <div class="metric-row"><span class="label">Last played</span><span class="value" id="lecture-3-last-played">—</span></div>
+                </div>
+                <div class="quiz-button-container">
+                    <button class="quiz-button" onclick="showQuizPage('lecture-3')">Start Quiz</button>
+                    <button class="retry-quiz-button" onclick="retryWholeQuiz('lecture-3')" style="display: none;">Retry Full Quiz</button>
+                </div>
+            </div>
+            <!-- Other lecture cards can be added here if needed -->
+        </div>
+    </div>
+
+    <div id="lecture-1-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Anatomy Lecture 1 Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-1-practice-toggle">
+                        <input type="checkbox" id="lecture-1-practice-toggle" onchange="togglePracticeMode('lecture-1', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-1-timer" class="timer-display">60</span>
+                        <span id="lecture-1-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-1-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-1-question-progress" class="question-progress"></div>
+            <div id="lecture-1-question" class="question"></div>
+            <div id="lecture-1-options" class="options"></div>
+            <div id="lecture-1-feedback" class="feedback"></div>
+            <button id="lecture-1-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-3-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Intercostals &amp; Diaphragm Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-3-practice-toggle">
+                        <input type="checkbox" id="lecture-3-practice-toggle" onchange="togglePracticeMode('lecture-3', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-3-timer" class="timer-display">60</span>
+                        <span id="lecture-3-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-3-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-3-question-progress" class="question-progress"></div>
+            <div id="lecture-3-question" class="question"></div>
+            <div id="lecture-3-options" class="options"></div>
+            <div id="lecture-3-feedback" class="feedback"></div>
+            <button id="lecture-3-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="lecture-2-quiz-page" class="page-section">
+        <div class="header">
+            <div class="header-top">
+                <h1>Thoracic &amp; Lumbar Vertebrae Quiz</h1>
+                <div class="header-controls">
+                    <label class="mode-toggle" for="lecture-2-practice-toggle">
+                        <input type="checkbox" id="lecture-2-practice-toggle" onchange="togglePracticeMode('lecture-2', this.checked)">
+                        <span class="toggle-label">Practice mode</span>
+                    </label>
+                    <div class="timer-container">
+                        <span class="timer-label">Time:</span>
+                        <span id="lecture-2-timer" class="timer-display">60</span>
+                        <span id="lecture-2-timer-unit" class="timer-unit">s</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="lecture-2-progress-bar" class="progress-bar"></div></div>
+        </div>
+        <div class="quiz-container">
+            <div id="lecture-2-question-progress" class="question-progress"></div>
+            <div id="lecture-2-question" class="question"></div>
+            <div id="lecture-2-options" class="options"></div>
+            <div id="lecture-2-feedback" class="feedback"></div>
+            <button id="lecture-2-next-button" class="next-button">Next Question</button>
+        </div>
+        <div class="links"><a href="https://t.me/PT_Elitee" target="_blank"><i class="fab fa-telegram-plane"></i> Telegram</a><a href="https://chat.whatsapp.com/FRnMuetvhuWBGWCdaB8DaJ" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a><button class="back-button" onclick="showHubPage()"><i class="fas fa-arrow-left"></i> Back to Hub</button></div>
+    </div>
+
+    <div id="celebration-page" class="page-section">
+         <h1>Congratulations!</h1>
+         <p>You've perfectly completed the quiz!</p>
+         <button class="back-button" onclick="showHubPage()">Back to Quiz Hub</button>
+    </div>
+
+    <div id="explosion-overlay"></div>
+
+    <script>
+        // --- Shuffling Function (Fisher-Yates Algorithm) ---
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+          }
+        }
+
+        // --- Quiz Data Store ---
+        const quizData = {
+            'lecture-1': {
+                originalQuestions: [
+                    { question: "What forms the anterior boundary of the thoracic cage?", a: "Thoracic vertebrae", b: "The ribs", c: "The sternum and costal cartilages", d: "The diaphragm", correct: "c", explanation: "Anteriorly, the thoracic cage is formed by the sternum and the costal cartilages." },
+                    { question: "Which structure separates the thoracic cage from the abdomen?", a: "The sternum", b: "The vertebral column", c: "The thoracic inlet", d: "The diaphragm", correct: "d", explanation: "Inferiorly, the thoracic cage is separated from the abdomen by the diaphragm." },
+                    { question: "The manubrium sterni lies opposite which thoracic vertebrae?", a: "T1 and T2", b: "T3 and T4", c: "T5 and T6", d: "T7 and T8", correct: "b", explanation: "The manubrium sterni, the upper part of the sternum, lies opposite the 3rd and 4th thoracic vertebrae." },
+                    { question: "What is the clinical name for the joint between the manubrium and the body of the sternum?", a: "Xiphisternal joint", b: "Costochondral joint", c: "Sternal angle (Angle of Louis)", d: "Clavicular notch", correct: "c", explanation: "The Sternal angle (Angle of Louis) is located at the articulation of the manubrium and the body of the sternum. It's an important anatomical landmark." },
+                    { question: "Which costal cartilage articulates with the sternum at the sternal angle?", a: "1st costal cartilage", b: "2nd costal cartilage", c: "3rd costal cartilage", d: "7th costal cartilage", correct: "b", explanation: "The second costal cartilage articulates with the sternum at the sternal angle, making it a key landmark for counting ribs." },
+                    { question: "The joint between the body of the sternum and the xiphoid process is called the:", a: "Manubriosternal joint", b: "Xiphisternal junction", c: "Sternal angle", d: "Costosternal joint", correct: "b", explanation: "The body of the sternum articulates with the xiphoid process at the xiphisternal junction." },
+                    { question: "Ribs that articulate directly with the sternum via their own costal cartilage are called:", a: "False ribs", b: "Floating ribs", c: "Atypical ribs", d: "True ribs", correct: "d", explanation: "The upper seven pairs of ribs articulate directly with the sternum and are known as true ribs." },
+                    { question: "Which ribs are classified as 'false ribs'?", a: "Ribs 1-7", b: "Ribs 11-12", c: "Ribs 8, 9, and 10", d: "Ribs 3-9", correct: "c", explanation: "The 8th, 9th, and 10th ribs are called false ribs because they articulate with the costal cartilage of the rib above, not directly with the sternum." },
+                    { question: "The 11th and 12th ribs are known as floating ribs because they:", a: "Articulate with the rib above", b: "Are longer than other ribs", c: "End freely in the abdominal muscles", d: "Articulate with two vertebrae", correct: "c", explanation: "The 11th and 12th ribs are called floating ribs because their anterior ends are free and terminate in the abdominal muscles." },
+                    { question: "Which of the following ribs are considered 'typical ribs'?", a: "1st, 2nd, 10th, 11th, 12th", b: "1st to 7th", c: "3rd to 9th", d: "All 12 ribs", correct: "c", explanation: "Ribs from the 3rd to the 9th are considered typical because they share similar features." },
+                    { question: "The posterior end of a typical rib consists of:", a: "Shaft and angle only", b: "Head, neck, and tubercle", c: "Costal cartilage only", d: "A concave end", correct: "b", explanation: "The posterior end of a typical rib is formed from the head, neck, and tubercle, which articulate with the thoracic vertebrae." },
+                    { question: "The head of a typical rib articulates with:", a: "Only one thoracic vertebra", b: "The transverse process of one vertebra", c: "Two adjacent thoracic vertebrae", d: "The sternum directly", correct: "c", explanation: "The head of a typical rib has two demifacets that articulate with the bodies of two adjacent thoracic vertebrae (the corresponding one and the one above)." },
+                    { question: "The tubercle of a typical rib articulates with which part of the vertebra?", a: "The body", b: "The spinous process", c: "The transverse process", d: "The lamina", correct: "c", explanation: "The tubercle of a typical rib has a facet that articulates with a corresponding facet on the transverse process of the thoracic vertebra of the same number." },
+                    { question: "What is the name of the groove on the inner surface of the lower part of a typical rib?", a: "Sternal groove", b: "Vertebral groove", c: "Costal groove", d: "Intercostal space", correct: "c", explanation: "The inner surface of a typical rib has a costal groove on its lower part." },
+                    { question: "The structures found in the costal groove, from superior to inferior, are:", a: "Artery, Vein, Nerve (AVN)", b: "Nerve, Artery, Vein (NAV)", c: "Vein, Artery, Nerve (VAN)", d: "Vein, Nerve, Artery (VNA)", correct: "c", explanation: "The costal groove protects the intercostal vein, artery, and nerve, arranged in that order from above downwards (VAN)." },
+                    { question: "How can you identify the side of a typical rib?", a: "The upper border is sharp and the lower is rounded", b: "The outer surface is concave", c: "The costal groove is on the inner surface of the sharp lower border", d: "The posterior end is concave", correct: "c", explanation: "To identify the side, note that the lower border is sharp and contains the costal groove on its inner surface, while the upper border is rounded." },
+                    { question: "Which of the following is a feature of the 1st rib?", a: "It is the longest rib", b: "It has a sharp upper border", c: "It has a scalene tubercle on its superior surface", d: "It has an inner and outer surface", correct: "c", explanation: "The 1st rib is short and broad, with a superior surface that features two grooves separated by a scalene tubercle." },
+                    { question: "The 1st rib has which surfaces and borders?", a: "Anterior and posterior surfaces, medial and lateral borders", b: "Superior and inferior surfaces, inner and outer borders", c: "Inner and outer surfaces, superior and inferior borders", d: "It is circular and has no distinct surfaces or borders", correct: "b", explanation: "Unlike a typical rib, the 1st rib is flattened and has a superior and inferior surface, and an inner and outer border." },
+                    { question: "A key feature of the 11th and 12th ribs is that they lack a:", a: "Head", b: "Neck", c: "Tubercle", d: "Shaft", correct: "c", explanation: "The 11th and 12th (and sometimes 10th) ribs are atypical because they lack a tubercle for articulation with the transverse processes." },
+                    { question: "The head of the 12th rib has:", a: "Two demifacets", b: "No facets", c: "A large complete circular facet", d: "A facet for the sternum", correct: "c", explanation: "The head of the 12th rib has a single large, complete circular facet to articulate with the body of the 12th thoracic vertebra." },
+                    { question: "Which cervical vertebrae are considered 'typical'?", a: "C1, C2, C7", b: "C1 and C2", c: "C3 to C6", d: "All seven", correct: "c", explanation: "The third to sixth (C3, C4, C5, C6) cervical vertebrae have similar features and are called typical cervical vertebrae." },
+                    { question: "What is the most important characteristic feature of all cervical vertebrae?", a: "A large body", b: "A bifid spinous process", c: "The foramen transversarium", d: "Large transverse processes", correct: "c", explanation: "The foramen transversarium in the transverse process is the most defining characteristic of all cervical vertebrae." },
+                    { question: "The spinous process of a typical cervical vertebra is described as:", a: "Long and pointed", b: "Short and bifid", c: "Absent", d: "Long and non-bifid", correct: "b", explanation: "The spine of a typical cervical vertebra (C3-C6) is characteristically short and bifid (split into two)." },
+                    { question: "The vertebral foramen of a typical cervical vertebra is:", a: "Small and circular", b: "Large and triangular", c: "Small and oval", d: "Absent", correct: "b", explanation: "A typical cervical vertebra has a large and triangular vertebral foramen to accommodate the cervical enlargement of the spinal cord." },
+                    { question: "The first cervical vertebra (C1) is also known as the:", a: "Axis", b: "Vertebra Prominens", c: "Atlas", d: "Dens", correct: "c", explanation: "The first cervical vertebra (C1) is called the Atlas, as it supports the globe of the head (the skull)." },
+                    { question: "A distinguishing feature of the Atlas (C1) is that it lacks a:", a: "Vertebral foramen", b: "Transverse process", c: "Body and spinous process", d: "Superior articular facet", correct: "c", explanation: "The Atlas is unique as it is a ring-like bone that lacks a body and a true spinous process, having a posterior tubercle instead." },
+                    { question: "The superior articular facets of the Atlas articulate with the:", a: "Dens of the Axis", b: "Body of C2", c: "Occipital condyles of the skull", d: "Transverse ligament", correct: "c", explanation: "The kidney-shaped superior articular facets of the Atlas articulate with the occipital condyles of the skull to form the atlanto-occipital joint." },
+                    { question: "The second cervical vertebra (C2) is called the:", a: "Atlas", b: "Axis", c: "Prominens", d: "Typical vertebra", correct: "b", explanation: "The second cervical vertebra (C2) is known as the Axis because the Atlas rotates around it." },
+                    { question: "What is the prominent upward projection from the body of the Axis (C2)?", a: "Spinous process", b: "Transverse process", c: "Odontoid process (Dens)", d: "Superior articular facet", correct: "c", explanation: "The Axis is characterized by the dens, or odontoid process, a conical projection that rises from its superior surface." },
+                    { question: "The anterior surface of the dens articulates with the:", a: "Posterior arch of the Atlas", b: "Body of the Atlas", c: "Anterior arch of the Atlas", d: "Transverse ligament", correct: "c", explanation: "The anterior surface of the dens has an ovoid facet for articulation with a corresponding facet on the posterior surface of the anterior arch of the Atlas." },
+                    { question: "The seventh cervical vertebra (C7) is known as the Vertebra Prominens because of its:", a: "Large body", b: "Large foramen transversarium", c: "Bifid spine", d: "Long, non-bifid spinous process", correct: "d", explanation: "C7 is called the Vertebra Prominens because its spine is long, non-bifid, and ends in a prominent tubercle that is easily palpated." },
+                    { question: "What is unique about the foramen transversarium of C7?", a: "It is larger than the others", b: "It is absent", c: "It transmits the vertebral vein only", d: "It transmits the vertebral artery only", correct: "c", explanation: "Unlike the foramina in C1-C6 which transmit the vertebral artery and veins, the foramen transversarium of C7 typically transmits only the vertebral vein." },
+                    { question: "What type of cartilage forms the costal cartilages?", a: "Fibrocartilage", b: "Elastic cartilage", c: "Hyaline cartilage", d: "Articular cartilage", correct: "c", explanation: "The costal cartilages are plates of hyaline cartilage that connect the anterior ends of the ribs to the sternum." },
+                    { question: "The posterior arch of the Atlas is longer than the anterior arch. True or False?", a: "True", b: "False", c: "They are equal in length", d: "The Atlas has no arches", correct: "a", explanation: "The posterior arch of the Atlas is indeed longer than its short anterior arch." },
+                    { question: "Which part of the Axis is formed by the fused bodies of the Atlas and the Axis?", a: "The dens", b: "The spine", c: "The body of the axis", d: "The lamina", correct: "c", explanation: "The body of the axis is considered to be formed by the fusion of the embryonic bodies of both the first (Atlas) and second (Axis) cervical vertebrae." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-2': {
+                originalQuestions: [
+                    { question: "How many thoracic vertebrae are there in the human spine?", a: "5", b: "7", c: "12", d: "10", correct: "c", explanation: "Page 3 of the lecture notes confirms the thoracic region contains twelve vertebrae." },
+                    { question: "Which of the following is a characteristic feature of a typical thoracic vertebra?", a: "A triangular vertebral foramen", b: "A heart-shaped body", c: "The absence of costal facets", d: "A short, horizontal spinous process", correct: "b", explanation: "Page 4 highlights the heart-shaped body as a hallmark of typical thoracic vertebrae." },
+                    { question: "The typical thoracic vertebrae are numbered from:", a: "T1 to T7", b: "T2 to T9", c: "T9 to T12", d: "T1, T10, T11, T12", correct: "b", explanation: "According to page 3, vertebrae two through nine are classified as typical thoracic vertebrae." },
+                    { question: "What does the facet on the transverse process of a typical thoracic vertebra articulate with?", a: "The head of the rib of the same number", b: "The tubercle of the rib of the same number", c: "The superior articular process of the vertebra below", d: "The body of the vertebra above", correct: "b", explanation: "Page 5 states the transverse process facet receives the tubercle of the rib bearing the same number." },
+                    { question: "Which feature distinguishes the first thoracic vertebra (T1) from the typical ones?", a: "It has no costal facets.", b: "It has a single complete circular facet and a small demifacet on its body.", c: "Its spine is short and points upwards.", d: "Its body is kidney-shaped.", correct: "b", explanation: "Page 6 explains T1 carries a full facet for the first rib and a demifacet for the second rib." },
+                    { question: "The spinous process of a typical thoracic vertebra is described as:", a: "Short, thick, and horizontal", b: "Bifid (split)", c: "Quadrilateral in shape", d: "Long, tapering, and directed downwards", correct: "d", explanation: "Page 4 describes the spine as long, tapering, and slanting downward and backward." },
+                    { question: "Which thoracic vertebra articulates only with the 10th pair of ribs?", a: "T9", b: "T10", c: "T11", d: "T12", correct: "b", explanation: "Page 7 notes that the tenth thoracic vertebra meets only the tenth rib pair." },
+                    { question: "Which of the following vertebrae has a small transverse process with no articular facet?", a: "T1", b: "T8", c: "T10", d: "T11", correct: "d", explanation: "As outlined on page 8, the eleventh thoracic vertebra lacks a facet on its transverse process." },
+                    { question: "The 12th thoracic vertebra (T12) has features that resemble which other type of vertebrae?", a: "Cervical", b: "Typical Thoracic", c: "Lumbar", d: "Sacral", correct: "c", explanation: "Page 9 remarks that T12 transitions toward lumbar characteristics." },
+                    { question: "What is the shape of the vertebral foramen in a typical thoracic vertebra?", a: "Small and circular", b: "Large and triangular", c: "Oval", d: "Kidney-shaped", correct: "a", explanation: "Page 4 records the foramen as small and circular in typical thoracic vertebrae." },
+                    { question: "What is the primary distinguishing feature of the lumbar vertebrae?", a: "Presence of transverse foramina", b: "Heart-shaped bodies", c: "Large size and absence of costal facets", d: "Long, downward-pointing spinous processes", correct: "c", explanation: "Page 10 emphasizes their bulk and lack of costal facets or transverse foramina." },
+                    { question: "The body of a typical lumbar vertebra is described as:", a: "Heart-shaped", b: "Circular", c: "Kidney-shaped", d: "Small and delicate", correct: "c", explanation: "Page 11 characterizes lumbar bodies as bulky and kidney-shaped." },
+                    { question: "What is the shape of the vertebral foramen in a lumbar vertebra?", a: "Circular", b: "Oval", c: "Triangular", d: "Square", correct: "c", explanation: "Pages 10 and 11 specify the triangular outline of the lumbar vertebral foramen." },
+                    { question: "Which lumbar vertebra is considered atypical?", a: "L1", b: "L3", c: "L4", d: "L5", correct: "d", explanation: "Page 11 lists the fifth lumbar vertebra as atypical." },
+                    { question: "What is a key feature of the spinous process of a typical lumbar vertebra?", a: "It is long and points downward.", b: "It is quadrilateral in shape and projects almost backward.", c: "It is bifid.", d: "It is very small and rounded.", correct: "b", explanation: "Page 11 notes the lumbar spine is quadrilateral and directed almost straight back." },
+                    { question: "The transverse processes of the 5th lumbar vertebra (L5) are described as:", a: "Long and slender", b: "Absent", c: "Thick, short, and pyramidal", d: "Containing a foramen", correct: "c", explanation: "Page 12 details L5 transverse processes as thick, short, and pyramidal." },
+                    { question: "The sacrum is a triangular fusion of how many vertebrae?", a: "3", b: "4", c: "5", d: "6", correct: "c", explanation: "Page 13 defines the sacrum as a fusion of five vertebrae." },
+                    { question: "What does the base of the sacrum articulate with?", a: "The coccyx", b: "The fourth lumbar vertebra", c: "The fifth lumbar vertebra", d: "The innominate (hip) bones", correct: "c", explanation: "Page 13 explains the sacral base meets the fifth lumbar vertebra at the lumbosacral angle." },
+                    { question: "The pelvic surface of the sacrum is _______ to increase pelvic capacity.", a: "Convex", b: "Concave", c: "Flat", d: "Irregular", correct: "b", explanation: "Page 13 describes the pelvic surface as concave, which deepens the pelvic cavity." },
+                    { question: "The superior articular facets of a typical thoracic vertebra are directed:", a: "Forward and medially", b: "Backward and medially", c: "Forward and laterally", d: "Backward and laterally", correct: "d", explanation: "Page 4 states the superior facets face backward and laterally." },
+                    { question: "The inferior articular facets of a typical thoracic vertebra are directed:", a: "Forward and medially", b: "Backward and medially", c: "Forward and laterally", d: "Backward and laterally", correct: "a", explanation: "Page 4 records the inferior articular processes as facing forward and medially." },
+                    { question: "Which part of a vertebra forms the vertebral arch along with the lamina?", a: "Body", b: "Spinous process", c: "Pedicle", d: "Transverse process", correct: "c", explanation: "The diagram on page 4 shows the pedicle joining with the lamina to form the vertebral arch." },
+                    { question: "The collection of vertebral foramina from all vertebrae forms the:", a: "Intervertebral foramen", b: "Vertebral canal", c: "Spinal curvature", d: "Zygapophysial joint", correct: "b", explanation: "Page 14 explains aligned vertebral foramina create the vertebral canal for the spinal cord." },
+                    { question: "The body of the L5 vertebra is the ________ of all lumbar vertebrae.", a: "Smallest", b: "Widest", c: "Largest", d: "Thinnest", correct: "c", explanation: "Page 12 identifies the L5 body as the largest within the lumbar series." },
+                    { question: "What is the main reason the body of a lumbar vertebra is so massive?", a: "To allow for greater rotation", b: "To protect the spinal cord more effectively", c: "To carry the greater part of the body weight", d: "To provide attachment for large muscles", correct: "c", explanation: "Page 10 remarks that the sizable lumbar body accommodates the heavy load of body weight." },
+                    { question: "What is the characteristic of the lamina in a typical thoracic vertebra?", a: "Long and thin", b: "Short, thick and broad", c: "Absent", d: "Fused with the spinous process", correct: "b", explanation: "Page 5 describes the laminae of typical thoracic vertebrae as short, thick, and broad." },
+                    { question: "The spine of the first thoracic vertebra (T1) is described as:", a: "Short and bifid", b: "Pointing sharply downwards", c: "Long, thick and horizontal", d: "Triangular with a blunt apex", correct: "c", explanation: "Page 6 notes the T1 spine is long, thick, and oriented horizontally." },
+                    { question: "The inferior articular facet of the 12th thoracic vertebra (T12) is unique because it is convex and directed:", a: "Forwards and medially", b: "Backwards and medially", c: "Forwards and laterally", d: "Backwards and downwards", correct: "c", explanation: "Page 9 highlights that the T12 inferior facet faces forwards and laterally." },
+                    { question: "What structure articulates with the apex of the sacrum?", a: "The fifth lumbar vertebra", b: "The coccyx", c: "The hip bone", d: "The first sacral vertebra", correct: "b", explanation: "Page 13 states the sacral apex points caudally to meet the coccyx." },
+                    { question: "The linkages between individual vertebrae include cartilaginous inter-body joints and what other type of joint?", a: "Fibrous suture joints", b: "Paired synovial facet joints", c: "Ball and socket joints", d: "Hinge joints", correct: "b", explanation: "Page 14 lists paired synovial facet (zygapophysial) joints as the second key linkage." },
+                    { question: "What is the function of the lateral intervertebral foramina?", a: "To protect the spinal cord", b: "To allow for articulation between vertebral bodies", c: "To transmit spinal nerves and associated vessels", d: "To provide attachment points for muscles", correct: "c", explanation: "Page 14 confirms these foramina carry spinal nerves and their vessels." },
+                    { question: "The body of the first thoracic vertebra (T1) resembles the body of which other vertebra?", a: "6th cervical vertebra", b: "7th cervical vertebra", c: "2nd thoracic vertebra", d: "12th thoracic vertebra", correct: "b", explanation: "Page 6 compares T1’s body to that of the seventh cervical vertebra." },
+                    { question: "The spinous process of the 11th thoracic vertebra is described as:", a: "Long and tapering", b: "Quadrilateral", c: "Horizontal and thick", d: "Triangular with a blunt apex", correct: "d", explanation: "Page 8 characterizes the T11 spine as triangular with a blunt tip." },
+                    { question: "What is the shape of the dorsal surface of the sacrum?", a: "Concave", b: "Convex", c: "Flat", d: "S-shaped", correct: "b", explanation: "Page 13 remarks that the posterior sacral surface is convex." },
+                    { question: "The base of the transverse processes of L5 is attached to the pedicle and also encroaches on the:", a: "Lamina", b: "Spinous process", c: "Side of the body", d: "Superior articular process", correct: "c", explanation: "Page 12 explains the stout L5 transverse process reaches onto the side of the vertebral body." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 35, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            },
+            'lecture-3': {
+                originalQuestions: [
+                    { question: "How many anterior intercostal spaces are there?", a: "11", b: "12", c: "9", d: "10", correct: "c", explanation: "Page 2 explains that only nine anterior spaces exist because ribs 11 and 12 end posteriorly." },
+                    { question: "What is the correct order of structures in the costal groove, from superior to inferior?", a: "Artery, Vein, Nerve", b: "Nerve, Artery, Vein", c: "Vein, Nerve, Artery", d: "Vein, Artery, Nerve", correct: "d", explanation: "Page 3 lists the arrangement as vein, artery, then nerve (VAN)." },
+                    { question: "Which intercostal muscle originates from the outer lip of the costal groove of the rib above?", a: "Innermost intercostal", b: "Internal intercostal", c: "External intercostal", d: "Subcostalis", correct: "c", explanation: "Page 4 identifies the external intercostal origin as the outer lip of the costal groove of the rib above." },
+                    { question: "The fibers of the external intercostal muscle are directed:", a: "Downwards and backwards", b: "Upwards and forwards", c: "Downwards and forwards", d: "Upwards and backwards", correct: "c", explanation: "As noted on page 5, the fibers run downwards and forwards." },
+                    { question: "Which muscle is considered an 'inspiratory intercostal' because it elevates the ribs?", a: "Internal intercostal", b: "Innermost intercostal", c: "Sternocostalis", d: "External intercostal", correct: "d", explanation: "Page 7 calls the external intercostal an inspiratory intercostal as it elevates the ribs." },
+                    { question: "The Sternocostalis muscle inserts into the inner surface of which costal cartilages?", a: "1st to 4th", b: "2nd to 6th", c: "5th to 8th", d: "7th to 10th", correct: "b", explanation: "According to page 8, sternocostalis inserts into costal cartilages 2 through 6." },
+                    { question: "Which structure is described as the most important muscle of respiration?", a: "External intercostals", b: "Internal intercostals", c: "The diaphragm", d: "Sternocostalis", correct: "c", explanation: "Page 10 names the diaphragm as the most important muscle for breathing." },
+                    { question: "The costal part of the diaphragm originates from the inner surface of the:", a: "Upper six costal cartilages", b: "Lower six costal cartilages", c: "All twelve ribs", d: "Floating ribs only", correct: "b", explanation: "Page 12 states the costal portion arises from the inner surface of the lower six costal cartilages." },
+                    { question: "The right crus of the diaphragm arises from which lumbar vertebrae?", a: "L1 and L2", b: "L2 and L3", c: "L1 to L3", d: "L2 to L4", correct: "c", explanation: "Page 14 describes the right crus origin spanning L1 to L3." },
+                    { question: "Which arcuate ligament extends from the body of L1 to the 12th rib, passing over the quadratus lumborum?", a: "Median arcuate ligament", b: "Medial arcuate ligament", c: "Lateral arcuate ligament", d: "Anterior longitudinal ligament", correct: "c", explanation: "Page 14 states the lateral arcuate ligament arches over quadratus lumborum from L1 to rib 12." },
+                    { question: "All muscular parts of the diaphragm insert into which structure?", a: "The xiphoid process", b: "The lower ribs", c: "The central tendon", d: "The lumbar vertebrae", correct: "c", explanation: "Page 16 confirms that every muscular segment inserts into the central tendon." },
+                    { question: "The vena caval opening, which transmits the IVC and right phrenic nerve, is at which vertebral level?", a: "T8", b: "T10", c: "T12", d: "L1", correct: "a", explanation: "Page 17 positions the caval hiatus at vertebral level T8." },
+                    { question: "Which structures pass through the esophageal opening in the diaphragm?", a: "Esophagus and aorta", b: "Esophagus and right phrenic nerve", c: "Esophagus and anterior/posterior gastric nerves", d: "Esophagus and thoracic duct", correct: "c", explanation: "Page 17 lists the esophagus plus anterior and posterior gastric nerves through the esophageal hiatus." },
+                    { question: "The aortic opening lies behind the median arcuate ligament and transmits the aorta, thoracic duct, and the:", a: "Hemi-azygos vein", b: "Azygos vein", c: "Inferior vena cava", d: "Superior vena cava", correct: "b", explanation: "Page 17 indicates the aortic hiatus carries the aorta, thoracic duct, and azygos vein." },
+                    { question: "The motor nerve supply to the diaphragm is provided by which nerve?", a: "The vagus nerve", b: "The intercostal nerves", c: "The subcostal nerve", d: "The phrenic nerve", correct: "d", explanation: "Page 22 clearly states the diaphragm’s motor supply is via the phrenic nerves." },
+                    { question: "When the diaphragm contracts, it descends, causing what change in the thoracic cavity?", a: "A decrease in vertical diameter", b: "An increase in transverse diameter", c: "An increase in vertical diameter", d: "No change in volume", correct: "c", explanation: "Page 22 describes contraction increasing thoracic vertical diameter." },
+                    { question: "Sharp, spasmodic contractions of the diaphragm are known as:", a: "Diaphragmatic hernia", b: "Pleurisy", c: "Hiccups", d: "Expiration", correct: "c", explanation: "Hiccups are defined on page 23 as sudden, spasmodic diaphragmatic contractions." },
+                    { question: "The direction of the fibers for the internal and innermost intercostal muscles is:", a: "Downwards and forwards", b: "Downwards and backwards", c: "Upwards and medially", d: "Horizontally", correct: "b", explanation: "Page 5 points out both internal layers run downwards and backwards." },
+                    { question: "The external intercostal muscle is replaced anteriorly by the:", a: "Posterior intercostal membrane", b: "Anterior intercostal membrane", c: "Sternocostalis muscle", d: "Central tendon", correct: "b", explanation: "Page 6 notes the external intercostal transitions to the anterior intercostal membrane." },
+                    { question: "What is the superior relation to the diaphragm?", a: "The liver and stomach", b: "The kidneys and spleen", c: "The pleurae, lungs, pericardium, and heart", d: "The psoas major and quadratus lumborum", correct: "c", explanation: "Page 20 lists the pleurae, lungs, pericardium, and heart above the diaphragm." },
+                    { question: "The left crus of the diaphragm is smaller than the right and arises from which vertebrae?", a: "L1 and L2", b: "L2 and L3", c: "L3 and L4", d: "T12 and L1", correct: "a", explanation: "Page 14 states the left crus springs from L1 and L2." },
+                    { question: "Which ligament unites the crura of the diaphragm anterior to the aorta?", a: "Lateral arcuate ligament", b: "Medial arcuate ligament", c: "Anterior longitudinal ligament", d: "Median arcuate ligament", correct: "d", explanation: "Page 14 mentions the median arcuate ligament joining the crura anterior to the aorta." },
+                    { question: "The esophageal opening is at which vertebral level?", a: "T8", b: "T10", c: "T12", d: "L1", correct: "b", explanation: "Page 17 situates the esophageal hiatus at T10." },
+                    { question: "The sensory nerve supply to the central part of the diaphragm comes from the:", a: "Vagus nerve", b: "Intercostal nerves", c: "Phrenic nerve", d: "Sympathetic trunk", correct: "c", explanation: "Page 22 details the central sensory supply via the phrenic nerve." },
+                    { question: "The internal intercostal muscle extends from the sternum to which point?", a: "The costochondral junction", b: "The tubercle of the rib", c: "The angle of the rib", d: "The head of the rib", correct: "c", explanation: "Page 6 states the internal intercostal stretches back to the rib angle." },
+                    { question: "Which of the following is an inferior relation to the right side of the diaphragm?", a: "Stomach", b: "Spleen", c: "Right lobe of liver", d: "Left kidney", correct: "c", explanation: "Page 20 lists the right lobe of the liver and right kidney beneath the diaphragm on the right." },
+                    { question: "The central tendon of the diaphragm is described as having a shape like a:", a: "Circle", b: "Trifoil leaf", c: "Dome", d: "Square", correct: "b", explanation: "Page 16 describes the tendon as resembling a trifoil (three-leaf) shape." },
+                    { question: "The sympathetic trunk passes through a minor opening in the diaphragm located behind the:", a: "Lateral arcuate ligament", b: "Median arcuate ligament", c: "Central tendon", d: "Medial arcuate ligament", correct: "d", explanation: "Page 19 mentions the sympathetic trunk slipping behind the medial arcuate ligament." },
+                    { question: "What condition involves an abdominal organ entering the thoracic cavity through the diaphragm?", a: "Hiccups", b: "Congenital diaphragmatic hernia", c: "Pleurisy", d: "Costochondritis", correct: "b", explanation: "Page 23 defines congenital diaphragmatic hernia as abdominal organs protruding into the thorax." },
+                    { question: "Which two muscles are considered 'expiratory intercostals' because they depress the ribs?", a: "External and Internal", b: "Internal and Innermost", c: "External and Innermost", d: "Sternocostalis and Subcostalis", correct: "b", explanation: "Page 7 emphasizes that the internal and innermost intercostals depress the ribs, acting as expiratory muscles." }
+                ],
+                questions: [],
+                state: { currentQuestion: 0, score: 0, mcqCount: 30, incorrectQuestions: [], completedPerfectly: false, timerIntervalId: null, timeRemaining: 0, practiceMode: false, elapsedSeconds: 0, questionStartTimestamp: null, keyboardIndex: null }
+            }
+        };
+
+        let activeQuizId = null;
+        const PAGE_TRANSITION_DURATION = 450;
+        const QUESTION_TIME_LIMIT = 60; 
+        const EXPLOSION_DURATION = 1200;
+
+        function applyStateDefaults(quizId, state) {
+            if (!quizData[quizId]) return state;
+            const defaults = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: quizData[quizId].originalQuestions.length,
+                incorrectQuestions: [],
+                completedPerfectly: false,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed',
+                questions: [...quizData[quizId].originalQuestions]
+            };
+            const merged = { ...defaults, ...state };
+            if (!Array.isArray(merged.questions) || merged.questions.length === 0) {
+                merged.questions = [...quizData[quizId].originalQuestions];
+            }
+            merged.timerIntervalId = null;
+            merged.questionStartTimestamp = null;
+            merged.keyboardIndex = null;
+            if (merged.practiceMode) merged.sessionMode = 'practice';
+            if (!merged.sessionMode) merged.sessionMode = merged.practiceMode ? 'practice' : 'timed';
+            return merged;
+        }
+
+        function recordTimeSpent(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+            if (!state.questionStartTimestamp) return;
+            const elapsed = Math.max(0, Math.round((Date.now() - state.questionStartTimestamp) / 1000));
+            state.elapsedSeconds = (state.elapsedSeconds || 0) + elapsed;
+            state.questionStartTimestamp = null;
+        }
+
+        function updateQuestionProgress(quizId) {
+            const progressEl = document.getElementById(`${quizId}-question-progress`);
+            const data = quizData[quizId];
+            if (!progressEl || !data || !data.state) return;
+            const total = data.questions ? data.questions.length : 0;
+            const currentIndex = data.state.currentQuestion;
+
+            if (!total || currentIndex >= total) {
+                progressEl.textContent = '';
+                progressEl.classList.remove('practice-mode');
+                return;
+            }
+
+            const parts = [`Question ${Math.min(currentIndex + 1, total)} of ${total}`];
+            if (data.state.practiceMode) parts.push('Practice mode');
+            progressEl.textContent = parts.join(' • ');
+            progressEl.classList.toggle('practice-mode', !!data.state.practiceMode);
+        }
+
+        function updatePracticeModeUI(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const practiceToggle = document.getElementById(`${quizId}-practice-toggle`);
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+
+            if (practiceToggle) practiceToggle.checked = !!data.state.practiceMode;
+            if (data.state.practiceMode) {
+                if (data.state.timerIntervalId) {
+                    clearInterval(data.state.timerIntervalId);
+                    data.state.timerIntervalId = null;
+                }
+                if (timerDisplay) timerDisplay.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+            } else {
+                if (timerDisplay) timerDisplay.textContent = data.state.timeRemaining ?? QUESTION_TIME_LIMIT;
+                if (timerUnit) timerUnit.style.display = '';
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+            }
+            updateQuestionProgress(quizId);
+        }
+
+        function togglePracticeMode(quizId, enabled) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            recordTimeSpent(quizId);
+            if (data.state.timerIntervalId) {
+                clearInterval(data.state.timerIntervalId);
+                data.state.timerIntervalId = null;
+            }
+            data.state.practiceMode = !!enabled;
+            data.state.timeRemaining = QUESTION_TIME_LIMIT;
+            data.state.sessionMode = data.state.practiceMode ? 'practice' : 'timed';
+            updatePracticeModeUI(quizId);
+            if (!data.state.practiceMode) {
+                startQuestionTimer(quizId);
+            }
+            const optionsContainer = getElement(quizId, 'options');
+            const hasActiveOptions = optionsContainer && Array.from(optionsContainer.querySelectorAll('button')).some(btn => !btn.disabled);
+            data.state.questionStartTimestamp = hasActiveOptions ? Date.now() : null;
+            saveQuizState(quizId);
+        }
+
+        function getQuizStats(quizId) {
+            const defaults = {
+                attempts: 0,
+                bestPercent: null,
+                bestScore: null,
+                bestTotal: null,
+                lastScore: null,
+                lastTotal: null,
+                lastPercent: null,
+                perfectRuns: 0,
+                totalTimeSeconds: 0,
+                practiceRuns: 0,
+                lastPlayedAt: null
+            };
+            try {
+                const raw = localStorage.getItem(`quizStats_${quizId}`);
+                if (!raw) return { ...defaults };
+                const parsed = JSON.parse(raw);
+                return { ...defaults, ...parsed };
+            } catch (e) {
+                console.warn('Failed to parse stats for', quizId, e);
+                return { ...defaults };
+            }
+        }
+
+        function saveQuizStats(quizId, stats) {
+            localStorage.setItem(`quizStats_${quizId}`, JSON.stringify(stats));
+        }
+
+        function formatScoreValue(score, total, percent) {
+            if (typeof score !== 'number' || typeof total !== 'number' || total === 0) return '—';
+            const percentText = typeof percent === 'number' ? `${percent.toFixed(1)}%` : `${((score / total) * 100).toFixed(1)}%`;
+            return `${score}/${total} (${percentText})`;
+        }
+
+        function formatDuration(totalSeconds) {
+            if (!totalSeconds || totalSeconds <= 0) return '—';
+            const seconds = Math.max(0, Math.round(totalSeconds));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) {
+                return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+            }
+            return `${minutes}m ${secs.toString().padStart(2, '0')}s`;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return null;
+            try {
+                const date = new Date(timestamp);
+                if (Number.isNaN(date.getTime())) return null;
+                return date.toLocaleString([], { hour12: true });
+            } catch (error) {
+                console.warn('Failed to format timestamp', error);
+                return null;
+            }
+        }
+
+        function updateQuizMetricsUI(quizId, stats = null) {
+            const quizStats = stats || getQuizStats(quizId);
+            const bestEl = document.getElementById(`${quizId}-best-score`);
+            const lastEl = document.getElementById(`${quizId}-last-score`);
+            const perfectEl = document.getElementById(`${quizId}-perfect-runs`);
+            const avgTimeEl = document.getElementById(`${quizId}-average-time`);
+            const lastPlayedEl = document.getElementById(`${quizId}-last-played`);
+
+            if (bestEl) bestEl.textContent = quizStats.bestScore != null && quizStats.bestTotal != null
+                ? formatScoreValue(quizStats.bestScore, quizStats.bestTotal, quizStats.bestPercent)
+                : '—';
+
+            if (lastEl) lastEl.textContent = quizStats.lastScore != null && quizStats.lastTotal != null
+                ? formatScoreValue(quizStats.lastScore, quizStats.lastTotal, quizStats.lastPercent)
+                : '—';
+
+            if (perfectEl) perfectEl.textContent = quizStats.perfectRuns || 0;
+
+            if (avgTimeEl) {
+                const averageSeconds = quizStats.attempts > 0 && quizStats.totalTimeSeconds
+                    ? quizStats.totalTimeSeconds / quizStats.attempts
+                    : 0;
+                avgTimeEl.textContent = formatDuration(averageSeconds);
+            }
+
+            if (lastPlayedEl) {
+                const formatted = formatTimestamp(quizStats.lastPlayedAt);
+                lastPlayedEl.textContent = formatted || '—';
+            }
+        }
+
+        function buildIncorrectReview(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !Array.isArray(data.state.incorrectQuestions) || data.state.incorrectQuestions.length === 0) {
+                return '';
+            }
+
+            const items = data.state.incorrectQuestions.map((item, index) => {
+                const correctAnswerText = item && item.correct && item[item.correct] ? item[item.correct] : 'Not available';
+                const questionLabel = item && item.question ? item.question : `Question ${index + 1}`;
+                return `
+                    <details>
+                        <summary>${questionLabel}</summary>
+                        <div class="review-body">
+                            <div><strong>Correct answer:</strong> ${correctAnswerText}</div>
+                            ${item && item.explanation ? `<div class="explanation">${item.explanation}</div>` : ''}
+                        </div>
+                    </details>
+                `;
+            }).join('');
+
+            return `
+                <div class="results-accordion">
+                    <h3>Review your tricky questions</h3>
+                    ${items}
+                </div>
+            `;
+        }
+
+        function setupOptionKeyboardNavigation(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(quizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length) {
+                data.state.keyboardIndex = null;
+                return;
+            }
+            buttons.forEach((btn, index) => {
+                btn.dataset.optionIndex = index.toString();
+            });
+            data.state.keyboardIndex = 0;
+            buttons[0].focus({ preventScroll: true });
+        }
+
+        function handleOptionNavigation(event) {
+            if (!activeQuizId) return;
+            const data = quizData[activeQuizId];
+            if (!data || !data.state) return;
+            const optionsContainer = getElement(activeQuizId, 'options');
+            if (!optionsContainer) return;
+            const buttons = Array.from(optionsContainer.querySelectorAll('button'));
+            if (!buttons.length || buttons.every(btn => btn.disabled)) return;
+
+            const state = data.state;
+            if (typeof state.keyboardIndex !== 'number') state.keyboardIndex = 0;
+
+            const maxIndex = buttons.length - 1;
+            let handled = false;
+
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+                state.keyboardIndex = state.keyboardIndex >= maxIndex ? 0 : state.keyboardIndex + 1;
+                handled = true;
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+                state.keyboardIndex = state.keyboardIndex <= 0 ? maxIndex : state.keyboardIndex - 1;
+                handled = true;
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                const targetBtn = buttons[state.keyboardIndex];
+                if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                handled = true;
+            } else if (/^[1-9]$/.test(event.key)) {
+                const numericIndex = parseInt(event.key, 10) - 1;
+                if (numericIndex >= 0 && numericIndex <= maxIndex) {
+                    const targetBtn = buttons[numericIndex];
+                    if (targetBtn && !targetBtn.disabled) targetBtn.click();
+                    state.keyboardIndex = numericIndex;
+                    handled = true;
+                }
+            }
+
+            if (handled) {
+                event.preventDefault();
+                const focusBtn = buttons[state.keyboardIndex];
+                if (focusBtn && !focusBtn.disabled) focusBtn.focus({ preventScroll: true });
+            }
+        }
+
+        function triggerScreenFlash() {
+            const flash = document.createElement('div');
+            flash.className = 'full-screen-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => {
+                flash.remove();
+            }, 400); // Match animation duration
+        }
+
+        function createExplosion(x, y, color = 'orange') {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) return;
+
+            overlay.style.display = 'block';
+
+            const particleCount = 40;
+            const angleIncrement = (2 * Math.PI) / particleCount;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'explosion-particle';
+                particle.style.backgroundColor = color;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                overlay.appendChild(particle);
+
+                const angle = i * angleIncrement;
+                const distance = 50 + Math.random() * 150;
+                const duration = 600 + Math.random() * 600;
+
+                const translateX = Math.cos(angle) * distance;
+                const translateY = Math.sin(angle) * distance;
+
+                particle.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${translateX}px, ${translateY}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.1, 0.7, 0.5, 1)',
+                    fill: 'forwards'
+                });
+
+                setTimeout(() => {
+                    particle.remove();
+                }, duration);
+            }
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, EXPLOSION_DURATION);
+        }
+
+        // --- Helper to get elements by ID prefix ---
+        function getElement(quizId, elementSuffix) {
+            if (!quizId) return null;
+            return document.getElementById(`${quizId}-${elementSuffix}`);
+        }
+
+        // --- Page Transition Animation (Scale and Fade) ---
+        function animatePageTransition(element, direction, duration, callback) {
+            if (!element) { if (callback) callback(); return; }
+            if (element.animationFrameId) cancelAnimationFrame(element.animationFrameId);
+
+            let startTime = null;
+            const startOpacity = direction === 'in' ? 0 : 1;
+            const endOpacity = direction === 'in' ? 1 : 0;
+            const startScale = direction === 'in' ? 1.05 : 1;
+            const endScale = direction === 'in' ? 1 : 0.95;
+            const startBlur = direction === 'in' ? 5 : 0;
+            const endBlur = direction === 'in' ? 0 : 5;
+
+            if (direction === 'in') {
+                element.style.opacity = startOpacity;
+                element.style.transform = `scale(${startScale})`;
+                element.style.filter = `blur(${startBlur}px)`;
+                element.style.display = (element.id === 'celebration-page') ? 'flex' : 'block';
+            }
+
+            function animateFrame(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsedTime = timestamp - startTime;
+                const progress = Math.min(1, elapsedTime / duration);
+                const easedProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+
+                const currentOpacity = startOpacity + (endOpacity - startOpacity) * easedProgress;
+                const currentScale = startScale + (endScale - startScale) * easedProgress;
+                const currentBlur = startBlur + (endBlur - startBlur) * easedProgress;
+
+                element.style.opacity = currentOpacity;
+                element.style.transform = `scale(${currentScale})`;
+                element.style.filter = `blur(${currentBlur}px)`;
+
+                if (progress < 1) {
+                    element.animationFrameId = requestAnimationFrame(animateFrame);
+                } else {
+                    element.style.opacity = endOpacity;
+                    element.style.transform = `scale(${endScale})`;
+                    element.style.filter = `blur(${endBlur}px)`;
+                    element.animationFrameId = null;
+                    if (direction === 'out') {
+                        element.style.display = 'none';
+                        element.style.transform = 'scale(1)';
+                        element.style.filter = 'blur(0px)';
+                    }
+                    if (callback) callback();
+                }
+            }
+            element.animationFrameId = requestAnimationFrame(animateFrame);
+        }
+
+
+        // --- Navigation Functions ---
+        function transitionToPage(targetPageId) {
+            const allPages = document.querySelectorAll('.page-section');
+            let currentPage = null;
+            allPages.forEach(page => {
+                if (page.classList.contains('active-page')) {
+                    currentPage = page;
+                }
+            });
+
+            const targetPage = document.getElementById(targetPageId);
+            if (!targetPage) {
+                console.error(`Target page ${targetPageId} not found.`);
+                return;
+            }
+
+            if (currentPage && currentPage !== targetPage) {
+                currentPage.classList.remove('active-page');
+                currentPage.style.zIndex = 0;
+                animatePageTransition(currentPage, 'out', PAGE_TRANSITION_DURATION);
+            }
+
+            targetPage.style.position = 'absolute';
+            targetPage.style.zIndex = 1;
+            animatePageTransition(targetPage, 'in', PAGE_TRANSITION_DURATION, () => {
+                targetPage.classList.add('active-page');
+                targetPage.style.position = 'relative';
+                 // Re-render MathJax content if the target page is a quiz page
+                if (targetPageId.includes('-quiz-page') && typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise();
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+
+        function showQuizPage(quizId) {
+            activeQuizId = quizId;
+            if (!quizData[quizId] || !quizData[quizId].originalQuestions) {
+                console.error(`Quiz data missing for: ${quizId}`);
+                showHubPage();
+                return;
+            }
+            // Load state from localStorage
+            const savedState = loadQuizState(quizId);
+
+          if(savedState) {
+              const hydratedState = applyStateDefaults(quizId, savedState);
+              quizData[quizId].state = hydratedState;
+              quizData[quizId].questions = hydratedState.questions;
+          } else {
+              resetQuizState(quizId); // Fresh start
+              quizData[quizId].questions = [...quizData[quizId].originalQuestions];
+          }
+
+
+            const targetPageId = `${quizId}-quiz-page`;
+            const quizPage = document.getElementById(targetPageId);
+
+            if (quizPage) {
+                transitionToPage(targetPageId);
+                updatePracticeModeUI(quizId);
+                if (quizData[quizId].questions.length > 0) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const qContainer = getElement(quizId, 'question');
+                    if (qContainer) qContainer.textContent = "No questions loaded for this quiz yet.";
+                    const oContainer = getElement(quizId, 'options');
+                    if (oContainer) oContainer.innerHTML = '';
+                     const timerDisp = getElement(quizId, 'timer');
+                    if (timerDisp) timerDisp.textContent = QUESTION_TIME_LIMIT; 
+                    updateQuestionProgress(quizId);
+                }
+            } else {
+                console.error(`Quiz page element not found: ${targetPageId}`);
+                showHubPage();
+            }
+        }
+
+        function showHubPage() {
+            if (activeQuizId) {
+                recordTimeSpent(activeQuizId);
+                saveQuizState(activeQuizId); // Save progress when leaving a quiz
+                if(quizData[activeQuizId] && quizData[activeQuizId].state.timerIntervalId){
+                    clearInterval(quizData[activeQuizId].state.timerIntervalId);
+                    quizData[activeQuizId].state.timerIntervalId = null;
+                }
+            }
+            activeQuizId = null;
+            updateHubUI(); // Update the hub page buttons and checkmarks
+            transitionToPage('quiz-selection-page');
+        }
+
+        function showCelebrationPage() { // This is for the *overall* celebration
+            activeQuizId = null;
+            transitionToPage('celebration-page');
+            const celebrationPage = document.getElementById('celebration-page');
+            if (celebrationPage) startConfetti(celebrationPage); // Confetti from center for overall
+        }
+
+        // --- Quiz State Persistence ---
+        function saveQuizState(quizId) {
+            if (!quizData[quizId] || !quizData[quizId].state) return;
+            // Don't save state if quiz is completed
+             if (quizData[quizId].state.currentQuestion >= quizData[quizId].questions.length) {
+                localStorage.removeItem(`quizState_${quizId}`);
+                return;
+            }
+            const stateForStorage = {
+                ...quizData[quizId].state,
+                timerIntervalId: null,
+                questionStartTimestamp: null
+            };
+            localStorage.setItem(`quizState_${quizId}`, JSON.stringify(stateForStorage));
+        }
+
+        function loadQuizState(quizId) {
+            const savedStateJSON = localStorage.getItem(`quizState_${quizId}`);
+            if (savedStateJSON) {
+                return JSON.parse(savedStateJSON);
+            }
+            return null;
+        }
+
+        function retryWholeQuiz(quizId) {
+            localStorage.removeItem(`quizState_${quizId}`); // Clear saved progress
+            quizData[quizId].state.completedPerfectly = false; // Reset perfect status
+            localStorage.setItem(`quiz_${quizId}_completed`, 'false'); // Mark as not completed
+            resetQuizState(quizId);
+            showQuizPage(quizId);
+        }
+
+        // --- Quiz State Management ---
+        function resetQuizState(quizId) {
+            const data = quizData[quizId];
+            if (!data) { console.error(`Cannot reset state for non-existent quiz ID: ${quizId}`); return; }
+
+            if (!data.originalQuestions) data.originalQuestions = [];
+            data.questions = [...data.originalQuestions];
+
+            // Only load completion status from storage.
+            const wasOriginalQuizPerfected = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+            const mcqCount = data.originalQuestions.length;
+
+
+            if (data.state && data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: mcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: [...data.originalQuestions], // Start with full question set
+                practiceMode: false,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: 'timed'
+            };
+
+            data.questions = [...data.state.questions];
+
+            const progressBar = getElement(quizId, 'progress-bar');
+            if (progressBar) progressBar.style.width = '0%';
+            const timerDisplay = getElement(quizId, 'timer');
+            const timerContainer = timerDisplay ? timerDisplay.closest('.timer-container') : null;
+            if (timerDisplay) {
+                timerDisplay.textContent = QUESTION_TIME_LIMIT; 
+            }
+            if(timerContainer) {
+                 timerContainer.classList.remove('low-time');
+            }
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+        }
+
+
+        // --- Display Logic ---
+        function showQuizQuestion(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.questions || !data.state) { console.error(`Invalid data for quiz: ${quizId}`); showHubPage(); return; }
+
+            const state = data.state;
+            const questions = data.questions;
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            
+            // Update progress bar at the beginning of showing a question
+            const progressBar = getElement(quizId, 'progress-bar');
+            const totalQuestionsInCurrentAttempt = questions.length;
+            if(progressBar && totalQuestionsInCurrentAttempt > 0) {
+                 const progressPercentage = Math.min(100, ((state.currentQuestion) / totalQuestionsInCurrentAttempt) * 100);
+                 progressBar.style.width = `${progressPercentage}%`;
+            }
+
+
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) {
+                console.error(`UI elements missing for quiz: ${quizId}`); return;
+            }
+
+            const existingResults = questionContainer.querySelector('.results-buttons');
+            if (existingResults) questionContainer.innerHTML = '';
+
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.innerHTML = '';
+            nextButton.style.display = 'none';
+            optionsContainer.innerHTML = '';
+
+            state.questionStartTimestamp = Date.now();
+            updatePracticeModeUI(quizId);
+            updateQuestionProgress(quizId);
+
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'visible';
+
+
+            if (state.currentQuestion < questions.length) {
+                const q = questions[state.currentQuestion];
+                if (!q || typeof q.question !== 'string') {
+                    console.error(`Invalid question data: ${quizId}, index ${state.currentQuestion}`, q);
+                    advanceQuestion(quizId, true);
+                    return;
+                }
+                questionContainer.innerHTML = `Q${state.currentQuestion + 1}: ${q.question}`;
+                
+                if (!q.a || !q.b || !q.c || !q.d) {
+                     console.error(`MCQ options missing or malformed: ${quizId}, index ${state.currentQuestion}`, q);
+                     advanceQuestion(quizId, true);
+                     return;
+                }
+                const options = [{key:'a', text:q.a}, {key:'b', text:q.b}, {key:'c', text:q.c}, {key:'d', text:q.d}];
+                if (q.e) options.push({key:'e', text:q.e});
+
+                const shuffledOptions = [...options];
+                shuffleArray(shuffledOptions);
+
+                shuffledOptions.forEach(optionObj => {
+                    const button = document.createElement('button');
+                    button.textContent = optionObj.text;
+                    button.dataset.key = optionObj.key;
+                    button.onclick = () => checkQuizAnswer(quizId, optionObj.key);
+                    optionsContainer.appendChild(button);
+                });
+                setupOptionKeyboardNavigation(quizId);
+                startQuestionTimer(quizId);
+                
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([questionContainer, optionsContainer]);
+                }
+
+            } else {
+                state.questionStartTimestamp = null;
+                updateQuestionProgress(quizId);
+                showQuizResults(quizId);
+            }
+        }
+
+        // --- Answer Checking & Advancement ---
+        function checkQuizAnswer(quizId, selectedKey) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            const questions = data.questions;
+            if (state.currentQuestion >= questions.length) { console.error("Invalid question index."); return; }
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const currentQData = questions[state.currentQuestion];
+            const correctKey = currentQData.correct;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            if (!optionsContainer || !feedbackContainer || !nextButton) return;
+
+            feedbackContainer.style.display = 'block';
+            feedbackContainer.innerHTML = ''; // Clear previous feedback
+
+            const isCorrect = selectedKey === correctKey;
+
+            if (isCorrect) {
+                state.score++;
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:bounceIn 0.7s;"><i class='fa-solid fa-face-laugh-beam' style='color:#10B981;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:bounceIn 0.7s;">Bravo! Good job!</div>
+                  <div class="explanation">${currentQData.explanation || 'Well done!'}</div>
+                `;
+                if (typeof confetti !== 'undefined') confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            } else {
+                feedbackContainer.className = 'feedback incorrect';
+                const correctAnswerText = currentQData[correctKey];
+                feedbackContainer.innerHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-frown' style='color:#EF4444;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">Oh no! Try again!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                 if (data.questions.length === data.originalQuestions.length) {
+                    data.state.completedPerfectly = false; // If any answer is wrong in the main quiz, it's not perfect
+                    localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                }
+            }
+
+            optionsContainer.querySelectorAll('button').forEach(btn => {
+                btn.disabled = true;
+                const btnKey = btn.dataset.key;
+                if(btnKey === correctKey) {
+                    btn.style.background = 'rgba(34, 197, 94, 0.35)'; // Correct Green
+                    btn.style.borderColor = 'rgba(74, 222, 128, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-check' style='color:#10B981;'></i> ${btn.textContent.trim()}`;
+                } else if (btnKey === selectedKey) {
+                    btn.style.background = 'rgba(239, 68, 68, 0.35)'; // Incorrect Red
+                    btn.style.borderColor = 'rgba(252, 165, 165, 0.7)';
+                    btn.innerHTML = `<i class='fa-solid fa-circle-xmark' style='color:#EF4444;'></i> ${btn.textContent.trim()}`;
+                }
+            });
+
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                MathJax.typesetPromise([feedbackContainer]);
+            }
+            saveQuizState(quizId); // Save state after an answer
+            nextButton.textContent = "Next Question";
+            nextButton.style.display = 'block';
+            nextButton.onclick = () => advanceQuestion(quizId, false);
+            // Add fun feedback animations (only once)
+            if (!document.getElementById('fun-feedback-animations')) {
+                const style = document.createElement('style');
+                style.id = 'fun-feedback-animations';
+                style.innerHTML = `
+                @keyframes bounceIn {
+                  0% { transform: scale(0.7); opacity: 0.5; }
+                  70% { transform: scale(1.15); opacity: 1; }
+                  100% { transform: scale(1); }
+                }
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  20%, 60% { transform: translateX(-10px); }
+                  40%, 80% { transform: translateX(10px); }
+                }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function handleNonMcqNextClick(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+            if (state.currentQuestion >= data.questions.length) { console.error("Invalid index."); return; }
+
+            const q = data.questions[state.currentQuestion];
+            const nextButton = getElement(quizId, 'next-button');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            if (!nextButton || !feedbackContainer) return;
+
+            if (nextButton.textContent === "Show Answer") {
+                let answerPrefix = "Answer:";
+                if (q.type === "scientific_term") answerPrefix = "Scientific Term:";
+                else if (q.type === "enumerate") answerPrefix = "Enumeration:";
+                else if (q.type === "image_label") answerPrefix = "Labels / Answer:";
+
+                feedbackContainer.className = 'feedback correct';
+                feedbackContainer.innerHTML = `<div><strong>${answerPrefix}</strong></div><div class="explanation">${q.answer || 'No answer provided.'}</div>`;
+                feedbackContainer.style.display = 'block';
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                 saveQuizState(quizId); // Save state after showing answer
+                nextButton.textContent = "Next Question";
+            } else {
+                advanceQuestion(quizId, false);
+            }
+        }
+
+        function advanceQuestion(quizId, fromTimer = false) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.questions) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            const executeAdvance = () => {
+                state.currentQuestion++;
+                if (state.currentQuestion < data.questions.length) {
+                    state.timeRemaining = QUESTION_TIME_LIMIT;
+                }
+                saveQuizState(quizId); // Save state before showing next question
+
+                const questions = data.questions;
+                if (state.currentQuestion < questions.length) {
+                    showQuizQuestion(quizId);
+                } else {
+                    const progressBar = getElement(quizId, 'progress-bar');
+                    if(progressBar) progressBar.style.width = '100%';
+                    showQuizResults(quizId);
+                }
+            };
+
+            if (fromTimer) {
+                playExplosionAnimation(executeAdvance);
+            } else {
+                const timerContainer = getElement(quizId, 'timer')?.closest('.timer-container');
+                if (timerContainer) timerContainer.classList.remove('low-time');
+                if (timerContainer) timerContainer.classList.remove('practice-mode');
+                executeAdvance();
+            }
+        }
+
+
+        // --- Timer and Explosion Functions ---
+        function startQuestionTimer(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+            const timerDisplaySpan = getElement(quizId, 'timer');
+            const timerUnit = getElement(quizId, 'timer-unit');
+            const timerContainer = timerDisplaySpan ? timerDisplaySpan.closest('.timer-container') : null;
+            if (timerContainer) {
+                timerContainer.parentElement && (timerContainer.parentElement.style.visibility = 'visible');
+            }
+
+            if (data.state.practiceMode) {
+                if (timerDisplaySpan) timerDisplaySpan.textContent = '∞';
+                if (timerUnit) timerUnit.style.display = 'none';
+                if (timerContainer) {
+                    timerContainer.classList.add('practice-mode');
+                    timerContainer.classList.remove('low-time');
+                }
+                data.state.timerIntervalId = null;
+                return;
+            }
+
+            const withinRange = typeof data.state.timeRemaining === 'number' && data.state.timeRemaining > 0 && data.state.timeRemaining <= QUESTION_TIME_LIMIT;
+            data.state.timeRemaining = withinRange ? data.state.timeRemaining : QUESTION_TIME_LIMIT;
+
+            if (timerDisplaySpan) {
+                timerDisplaySpan.textContent = data.state.timeRemaining;
+            }
+            if (timerUnit) timerUnit.style.display = '';
+            if (timerContainer) {
+                timerContainer.classList.remove('practice-mode');
+                timerContainer.classList.remove('low-time');
+            }
+
+
+            data.state.timerIntervalId = setInterval(() => {
+                data.state.timeRemaining--;
+                if (timerDisplaySpan) timerDisplaySpan.textContent = data.state.timeRemaining;
+
+                if (data.state.timeRemaining <= 10 && data.state.timeRemaining > 0) {
+                    if (timerContainer) timerContainer.classList.add('low-time');
+                }
+                if (data.state.timeRemaining <= 0) handleTimeUp(quizId);
+            }, 1000);
+        }
+
+        function handleTimeUp(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+
+            if (data.state.practiceMode) return; // Timer shouldn't expire in practice mode
+
+            if (data.state.timerIntervalId) { clearInterval(data.state.timerIntervalId); data.state.timerIntervalId = null; }
+
+            recordTimeSpent(quizId);
+            data.state.questionStartTimestamp = null;
+
+            const optionsContainer = getElement(quizId, 'options');
+            if (optionsContainer) optionsContainer.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const currentQData = data.questions[data.state.currentQuestion];
+            if (feedbackContainer && currentQData) {
+                const correctAnswerText = currentQData[currentQData.correct] || "N/A";
+                feedbackContainer.className = 'feedback timeup';
+                let feedbackHTML = `
+                  <div style="font-size:2.2em; animation:shake 0.7s;"><i class='fa-solid fa-face-surprise' style='color:#F59E0B;'></i></div>
+                  <div style="font-size:1.3em; font-weight:bold; margin:0.3em 0; animation:shake 0.7s;">⏰ Time is up!</div>
+                  <div><strong>The correct answer was:</strong> <span style='color:#fbbf24;'>${correctAnswerText}</span></div>
+                  <div class="explanation">${currentQData.explanation || 'Review this topic.'}</div>
+                `;
+                feedbackContainer.innerHTML = feedbackHTML;
+                if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset feedback
+                    MathJax.typesetPromise([feedbackContainer]);
+                }
+                feedbackContainer.style.display = 'block';
+
+
+                if (currentQData.a && currentQData.correct) {
+                    data.state.incorrectQuestions.push(JSON.parse(JSON.stringify(currentQData)));
+                    if (data.questions.length === data.originalQuestions.length) {
+                         data.state.completedPerfectly = false;
+                         localStorage.setItem(`quiz_${quizId}_completed`, 'false');
+                    }
+                }
+            }
+            const nextButton = getElement(quizId, 'next-button');
+            if(nextButton) nextButton.style.display = 'none';
+
+            advanceQuestion(quizId, true);
+        }
+
+        function playExplosionAnimation(callback) {
+            const overlay = document.getElementById('explosion-overlay');
+            if (!overlay) { if (callback) callback(); return; }
+
+            const activeQuizPage = document.querySelector('.page-section.active-page');
+            const quizContainer = activeQuizPage ? activeQuizPage.querySelector('.quiz-container') : null;
+            const originX = quizContainer ? quizContainer.offsetLeft + quizContainer.offsetWidth / 2 : window.innerWidth / 2;
+            const originY = quizContainer ? quizContainer.offsetTop + quizContainer.offsetHeight / 2 : window.innerHeight / 2;
+
+            overlay.innerHTML = '';
+            overlay.style.display = 'block';
+
+            const flash = document.createElement('div');
+            flash.classList.add('full-screen-flash');
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 400);
+
+            const numParticles = 35;
+            const colors = ['#FFD700', '#FFAB00', '#FF6F00', '#FF3D00', '#DD2C00', '#FFFFFF'];
+
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('explosion-particle');
+                particle.style.left = `${originX}px`;
+                particle.style.top = `${originY}px`;
+                const size = Math.random() * 40 + 15;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const points = [];
+                const numPoints = Math.floor(Math.random() * 4) + 5;
+                for(let j=0; j < numPoints; j++) {
+                    const angle = (j / numPoints) * 2 * Math.PI;
+                    const radiusVariation = Math.random() * 0.4 + 0.8;
+                    const x = 50 + Math.cos(angle) * 50 * radiusVariation;
+                    const y = 50 + Math.sin(angle) * 50 * radiusVariation;
+                    points.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+                }
+                particle.style.clipPath = `polygon(${points.join(', ')})`;
+                overlay.appendChild(particle);
+                const angle = Math.random() * 360;
+                const distance = Math.random() * (Math.max(window.innerWidth, window.innerHeight) * 0.7) + (Math.max(window.innerWidth, window.innerHeight) * 0.3);
+                const translateX = Math.cos(angle * Math.PI / 180) * distance;
+                const translateY = Math.sin(angle * Math.PI / 180) * distance;
+                const scaleFactor = Math.random() * 4 + 3;
+                const rotation = Math.random() * 720 - 360;
+                particle.animate([
+                    { transform: `translate(-50%, -50%) scale(0) rotate(0deg)`, opacity: 1, offset: 0 },
+                    { transform: `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scaleFactor}) rotate(${rotation}deg)`, opacity: 1, offset: 0.7 },
+                    { transform: `translate(calc(-50% + ${translateX*1.2}px), calc(-50% + ${translateY*1.2}px)) scale(${scaleFactor*1.2}) rotate(${rotation + 90}deg)`, opacity: 0, offset: 1 }
+                ], { duration: EXPLOSION_DURATION - 200 + Math.random() * 400, easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)', fill: 'forwards' });
+            }
+            setTimeout(() => { overlay.style.display = 'none'; if (callback) callback(); }, EXPLOSION_DURATION);
+        }
+
+        // --- Results & Retry Logic ---
+        function showQuizResults(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state) return;
+            const state = data.state;
+
+            recordTimeSpent(quizId);
+            state.questionStartTimestamp = null;
+            state.keyboardIndex = null;
+
+            if (state.timerIntervalId) { clearInterval(state.timerIntervalId); state.timerIntervalId = null; }
+
+            const currentQuestions = data.questions;
+            const originalTotalMCQs = data.originalQuestions.length;
+            const mcqsInThisAttempt = currentQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+
+            const questionContainer = getElement(quizId, 'question');
+            const optionsContainer = getElement(quizId, 'options');
+            const feedbackContainer = getElement(quizId, 'feedback');
+            const nextButton = getElement(quizId, 'next-button');
+            const timerDisplaySpan = getElement(quizId, 'timer');
+
+            if (timerDisplaySpan) timerDisplaySpan.parentElement.style.visibility = 'hidden';
+            if (!questionContainer || !optionsContainer || !feedbackContainer || !nextButton) return;
+
+            optionsContainer.innerHTML = '';
+            feedbackContainer.style.display = 'none';
+            nextButton.style.display = 'none';
+            questionContainer.innerHTML = '';
+
+            const percentage = mcqsInThisAttempt > 0 ? ((state.score / mcqsInThisAttempt) * 100).toFixed(1) : 'N/A';
+            const scoreText = mcqsInThisAttempt > 0 ? `Score: ${state.score}/${mcqsInThisAttempt} (${percentage}%) on this attempt.` : 'Quiz complete (No MCQs in this set).';
+
+            const stats = getQuizStats(quizId);
+
+            const elapsedSeconds = state.elapsedSeconds || 0;
+            const attemptPercent = mcqsInThisAttempt > 0 ? (state.score / mcqsInThisAttempt) * 100 : null;
+
+            const updatedStats = {
+                ...stats,
+                attempts: stats.attempts + 1,
+                lastScore: mcqsInThisAttempt > 0 ? state.score : null,
+                lastTotal: mcqsInThisAttempt > 0 ? mcqsInThisAttempt : null,
+                lastPercent: attemptPercent,
+                totalTimeSeconds: stats.totalTimeSeconds + elapsedSeconds,
+                lastPlayedAt: Date.now(),
+                practiceRuns: stats.practiceRuns + (state.sessionMode === 'practice' ? 1 : 0)
+            };
+
+            const bestPercent = (mcqsInThisAttempt > 0) ? (state.score / mcqsInThisAttempt) * 100 : null;
+            if (bestPercent != null && (stats.bestPercent == null || bestPercent > stats.bestPercent)) {
+                updatedStats.bestPercent = bestPercent;
+                updatedStats.bestScore = state.score;
+                updatedStats.bestTotal = mcqsInThisAttempt;
+            }
+
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                updatedStats.perfectRuns = stats.perfectRuns + 1;
+            }
+
+            saveQuizStats(quizId, updatedStats);
+            updateQuizMetricsUI(quizId, updatedStats);
+            state.elapsedSeconds = 0;
+
+            const isFullOriginalAttempt = currentQuestions.length === originalTotalMCQs && originalTotalMCQs > 0;
+            if (isFullOriginalAttempt && state.score === originalTotalMCQs && state.incorrectQuestions.length === 0) {
+                 if (data.state) data.state.completedPerfectly = true;
+                 localStorage.setItem(`quiz_${quizId}_completed`, 'true');
+            }
+
+            const attemptMeta = [];
+            if (elapsedSeconds > 0) attemptMeta.push(`<strong>Time spent:</strong> ${formatDuration(elapsedSeconds)}`);
+            attemptMeta.push(`<strong>Mode:</strong> ${state.sessionMode === 'practice' ? 'Practice' : 'Timed'}`);
+            if (updatedStats.attempts > 1 && updatedStats.bestPercent != null) {
+                attemptMeta.push(`<strong>Best run:</strong> ${formatScoreValue(updatedStats.bestScore, updatedStats.bestTotal, updatedStats.bestPercent)}`);
+            }
+            const resultsMetaHtml = attemptMeta.length ? `<div class="results-meta">${attemptMeta.join(' • ')}</div>` : '';
+
+            const reviewHtml = buildIncorrectReview(quizId);
+
+            let buttonsHTML = '<div class="results-buttons">';
+            const currentAttemptWasPerfect = mcqsInThisAttempt > 0 && state.score === mcqsInThisAttempt && state.incorrectQuestions.length === 0;
+            if (currentAttemptWasPerfect) {
+                buttonsHTML += `<button class="celebrate-button" onclick="startConfetti(this)">Celebrate This Round!</button>`;
+            }
+
+            const incorrectToRetry = state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+            if (incorrectToRetry.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryIncorrectQuiz('${quizId}')">Retry Incorrect (${incorrectToRetry.length})</button>`;
+            }
+            if (data.originalQuestions && data.originalQuestions.length > 0) {
+                buttonsHTML += `<button class="retry-button" onclick="retryWholeQuiz('${quizId}')">Retry Full Quiz</button>`;
+            }
+
+            buttonsHTML += `<button class="back-button" onclick="showHubPage()">Back to Hub</button></div>`;
+            questionContainer.innerHTML = `<div style="text-align:center;"><h2 style="font-size:1.5em;margin-bottom:15px;">Quiz Completed!</h2><p class="results-text">${scoreText}</p>${resultsMetaHtml}${buttonsHTML}${reviewHtml}</div>`;
+             if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) { // Typeset results page
+                MathJax.typesetPromise([questionContainer]);
+            }
+            localStorage.removeItem(`quizState_${quizId}`); // Clear progress on completion
+            checkOverallCompletion();
+        }
+
+       function retryIncorrectQuiz(quizId) {
+            const data = quizData[quizId];
+            if (!data || !data.state || !data.state.incorrectQuestions) {
+                alert("Nothing to retry or data error!");
+                return;
+            }
+
+            const incorrectMCQsToRetry = data.state.incorrectQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label');
+
+            if (incorrectMCQsToRetry.length === 0) {
+                alert("No incorrect MCQs to retry from the last attempt.");
+                return;
+            }
+
+            const wasOriginalQuizPerfected = data.state.completedPerfectly;
+            const originalMcqCount = data.state.mcqCount;
+            if (data.state.timerIntervalId) clearInterval(data.state.timerIntervalId);
+
+            data.state = {
+                currentQuestion: 0,
+                score: 0,
+                mcqCount: originalMcqCount,
+                incorrectQuestions: [],
+                completedPerfectly: wasOriginalQuizPerfected,
+                timerIntervalId: null,
+                timeRemaining: QUESTION_TIME_LIMIT,
+                questions: JSON.parse(JSON.stringify(incorrectMCQsToRetry)),
+                practiceMode: data.state.practiceMode,
+                elapsedSeconds: 0,
+                questionStartTimestamp: null,
+                keyboardIndex: null,
+                sessionMode: data.state.practiceMode ? 'practice' : 'timed'
+            };
+            
+            saveQuizState(quizId); // Save the new "retry" state
+            showQuizPage(quizId); // Start the quiz with the incorrect questions
+        }
+        
+        // --- NEW: Update Hub UI based on saved states ---
+        function updateHubUI() {
+            for (const quizId in quizData) {
+                const card = document.getElementById(`${quizId}-card`);
+                if (!card) continue;
+                
+                const startButton = card.querySelector('.quiz-button');
+                const retryButton = card.querySelector('.retry-quiz-button');
+                const checkmark = card.querySelector('.completion-checkmark');
+
+                const savedState = loadQuizState(quizId);
+                const isCompleted = localStorage.getItem(`quiz_${quizId}_completed`) === 'true';
+
+                if (isCompleted) {
+                    checkmark.classList.add('visible');
+                    startButton.textContent = 'Retake Quiz';
+                    startButton.style.display = 'block';
+                    retryButton.style.display = 'none';
+                } else if (savedState && savedState.currentQuestion > 0) {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = `Continue Quiz (Q${savedState.currentQuestion + 1})`;
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'block';
+                } else {
+                     checkmark.classList.remove('visible');
+                     startButton.textContent = 'Start Quiz';
+                     startButton.style.display = 'block';
+                     retryButton.style.display = 'none';
+                }
+
+                updateQuizMetricsUI(quizId);
+            }
+        }
+
+
+        // --- Overall Completion & Confetti ---
+        function checkOverallCompletion() {
+            let allQuizzesPerfected = true;
+            let atLeastOneQuizWithMcqsExists = false;
+
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                const originalMcqsInThisQuiz = quiz.originalQuestions ? quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length : 0;
+
+                if (originalMcqsInThisQuiz > 0) {
+                    atLeastOneQuizWithMcqsExists = true;
+                    // Check local storage directly for completion status
+                    if (localStorage.getItem(`quiz_${quizId}_completed`) !== 'true') {
+                        allQuizzesPerfected = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allQuizzesPerfected && atLeastOneQuizWithMcqsExists) {
+                setTimeout(showCelebrationPage, 1500);
+            }
+        }
+
+        function startConfetti(buttonElement = null) {
+            if (typeof confetti !== 'function') { console.error("Confetti lib not loaded."); return; }
+            let confettiOrigin = { y: 0.6 };
+            if (buttonElement && typeof buttonElement.getBoundingClientRect === 'function') {
+                try {
+                    const rect = buttonElement.getBoundingClientRect();
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    confettiOrigin = {
+                        x: Math.max(0, Math.min(1, (rect.left + rect.width / 2) / vw)),
+                        y: Math.max(0, Math.min(1, (rect.top + rect.height / 2) / vh))
+                    };
+                } catch (e) { console.error("Error calculating confetti origin:", e); }
+            } else if (buttonElement && buttonElement.id === 'celebration-page') {
+                confettiOrigin = { x: 0.5, y: 0.1 };
+            }
+
+            const newConfettiColors = [
+                '#8B0000', '#DC143C', '#00008B', '#4169E1', '#800080', '#9370DB',
+                '#FF00FF', '#C71585', '#FFD700', '#DAA520', '#008080', '#20B2AA',
+                '#00CED1', '#48D1CC', '#FFC0CB', '#FFFFFF'
+            ];
+
+
+            const confettiSettings = {
+                particleCount: 250,
+                spread: 120,
+                origin: confettiOrigin,
+                colors: newConfettiColors,
+                scalar: 1.1,
+                drift: 0.5
+            };
+
+            if (buttonElement && buttonElement.id === 'celebration-page') {
+                confetti(confettiSettings);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.2, y:0.15}, spread: 80, particleCount: 100}), 300);
+                setTimeout(() => confetti({...confettiSettings, origin: {x:0.8, y:0.15}, spread: 80, particleCount: 100}), 600);
+            } else {
+                confetti(confettiSettings);
+            }
+        }
+
+
+        // --- Initialization ---
+        function initializeQuizData() {
+            for (const quizId in quizData) {
+                const quiz = quizData[quizId];
+                if (!quiz.originalQuestions) quiz.originalQuestions = [];
+                const mcqCount = quiz.originalQuestions.filter(q => q.type !== 'reason' && q.type !== 'scientific_term' && q.type !== 'enumerate' && q.type !== 'image_label').length;
+
+                // Set initial state structure, but don't overwrite if loaded from storage later
+                const initialState = {
+                    currentQuestion: 0,
+                    score: 0,
+                    mcqCount: mcqCount,
+                    incorrectQuestions: [],
+                    timerIntervalId: null,
+                    timeRemaining: QUESTION_TIME_LIMIT,
+                    completedPerfectly: localStorage.getItem(`quiz_${quizId}_completed`) === 'true',
+                    questions: [...quiz.originalQuestions]
+                };
+
+                quiz.state = initialState;
+
+                const timerDisplay = document.getElementById(`${quizId}-timer`);
+                if (timerDisplay) {
+                    timerDisplay.textContent = QUESTION_TIME_LIMIT;
+                }
+            }
+
+            updateHubUI(); // Update UI on first load
+
+            const hubPage = document.getElementById('quiz-selection-page');
+            if (hubPage) {
+                hubPage.style.display='block';
+                hubPage.style.opacity='1';
+                hubPage.classList.add('active-page');
+                hubPage.style.position='relative';
+                hubPage.style.zIndex=1;
+                hubPage.style.transform = 'scale(1)';
+                hubPage.style.filter = 'blur(0px)';
+            }
+            document.querySelectorAll('.page-section').forEach(page => {
+                if(page.id !== 'quiz-selection-page') {
+                    page.style.display='none';
+                    page.style.opacity='0';
+                    page.style.position='absolute';
+                    page.classList.remove('active-page');
+                    page.style.transform='scale(1)';
+                    page.style.filter = 'blur(0px)';
+                }
+            });
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise();
+            }
+        }
+        document.addEventListener('keydown', handleOptionNavigation);
+        document.addEventListener('DOMContentLoaded', initializeQuizData);
+    </script>
+</body>
+</html>
